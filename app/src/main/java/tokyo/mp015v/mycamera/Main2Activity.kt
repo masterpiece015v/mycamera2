@@ -28,7 +28,7 @@ class Main2Activity : AppCompatActivity() {
             lateinit var fileName : String
             val listItem = ArrayList<ListItem>()
             val options = BitmapFactory.Options().apply{
-                inSampleSize = 10
+                inSampleSize = 20
             }
 
             do{
@@ -46,7 +46,8 @@ class Main2Activity : AppCompatActivity() {
             findViewById<ListView>(R.id.listView).adapter =
                     ListAdapter(applicationContext,
                             R.layout.list_item,
-                            listItem)
+                            listItem
+                    )
 
         }
     }
