@@ -15,6 +15,7 @@ import android.provider.MediaStore
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v4.content.FileProvider
+import android.util.Log
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.Toast
@@ -31,6 +32,8 @@ class MainActivity : AppCompatActivity() {
     }
 
     private lateinit var path : String
+    private lateinit var imageFileName : String
+    private lateinit var timeStamp : String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,7 +50,13 @@ class MainActivity : AppCompatActivity() {
                     grantCameraPermission()
                 }
             }?: Toast.makeText(this,"カメラを扱うアプリがありません", Toast.LENGTH_SHORT).show()
+        }
 
+        findViewById<Button>(R.id.button2).setOnClickListener {
+            val intent = Intent().apply{
+                setClassName("tokyo.mp015v.mycamera","tokyo.mp015v.mycamera.Main2Activity")
+            }
+            startActivity( intent )
         }
     }
 
@@ -55,17 +64,23 @@ class MainActivity : AppCompatActivity() {
         if( requestCode == CAMERA_REQUEST_CODE && resultCode== Activity.RESULT_OK){
 
             val contentValues = ContentValues().apply{
+                //put(MediaStore.Images.Media.TITLE,imageFileName+".jpg")
+                //put(MediaStore.Images.Media.DISPLAY_NAME,imageFileName+".jpg")
+                //put(MediaStore.Images.Media.DATE_TAKEN,timeStamp)
+                //put(MediaStore.Images.Media.DATA,path)
                 put(MediaStore.Images.Media.MIME_TYPE,"image/jpeg")
                 put("_data",path)
             }
             contentResolver.insert(
                     MediaStore.Images.Media.EXTERNAL_CONTENT_URI,contentValues
             )
-
-            val inputStream = FileInputStream( File( path ))
+            Log.d("debug","path:" + path)
+            val inputStream = FileInputStream( File( path ) )
             val bitmap = BitmapFactory.decodeStream( inputStream )
 
             findViewById<ImageView>(R.id.imageView).setImageBitmap( bitmap )
+
+            //Log.d("debug",sb.toString())
 
             //val image = data?.extras?.get("data")?.let{
             //    findViewById<ImageView>(R.id.imageView).setImageBitmap(it as Bitmap)
@@ -92,6 +107,7 @@ class MainActivity : AppCompatActivity() {
 
         val extraStoragePermission = PackageManager.PERMISSION_GRANTED ==
                 ContextCompat.checkSelfPermission(applicationContext,Manifest.permission.WRITE_EXTERNAL_STORAGE)
+
         return cameraPermission && extraStoragePermission
     }
 
@@ -100,8 +116,8 @@ class MainActivity : AppCompatActivity() {
             CAMERA_PERMISSION_REQUEST_CODE)
 
     private fun createSaveFileUri() : Uri {
-        val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.JAPAN).format(Date())
-        val imageFileName = "casalack_" + timeStamp
+        timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.JAPAN).format(Date())
+        imageFileName = "casalack_" + timeStamp
 
         val storageDir = Environment.getExternalStoragePublicDirectory( Environment.DIRECTORY_DCIM + "/casalack")
         if(!storageDir.exists()){
