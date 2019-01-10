@@ -1,13 +1,13 @@
 package tokyo.mp015v.mycamera
 
+import android.graphics.BitmapFactory
 import android.graphics.drawable.Drawable
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
-import android.widget.Button
-import android.widget.TableLayout
-import android.widget.TableRow
-import android.widget.TextView
+import android.widget.*
+import java.io.File
+import java.io.FileInputStream
 
 class Main2Activity : AppCompatActivity() {
 
@@ -25,29 +25,29 @@ class Main2Activity : AppCompatActivity() {
 
             val str = String.format("MediaStore.Images=%s\n\n",cursor.getCount())
             lateinit var path : String
-            //val sb = StringBuilder( str ).apply{
-                do{
-                    //append("ID:")
-                    //append(cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media._ID)))
-                    //append("\n")
-                    //append(cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.TITLE)))
-                    //append("\n")
-                    //append("Path:")
+            lateinit var fileName : String
+            val listItem = ArrayList<ListItem>()
+            val options = BitmapFactory.Options().apply{
+                inSampleSize = 10
+            }
 
-                    //path = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA))
-                    path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DISPLAY_NAME ))
-                    //append( path )
-                    //append("\n")
-                    var tableRow = TableRow(this)
-                    tableRow.setBackgroundResource(R.drawable.border)
-                    tableRow.addView(createTextView(path))
-                    findViewById<TableLayout>(R.id.table).addView( tableRow )
+            do{
 
-                }while( cursor.moveToNext())
-            //}
+                path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DATA))
+                fileName = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DISPLAY_NAME ))
+                val inputStream = FileInputStream( File( path ) )
+                val bitmap = BitmapFactory.decodeStream( inputStream,null,options )
+                val item = ListItem( bitmap, fileName)
+                listItem.add( item )
+            }while( cursor.moveToNext())
+
             cursor.close()
 
-            //findViewById<TextView>(R.id.textView).text = sb
+            findViewById<ListView>(R.id.listView).adapter =
+                    ListAdapter(applicationContext,
+                            R.layout.list_item,
+                            listItem)
+
         }
     }
     private fun createTextView( text : String) : TextView{
