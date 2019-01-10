@@ -29,6 +29,7 @@ class MainActivity : AppCompatActivity() {
     companion object{
         const val CAMERA_REQUEST_CODE = 1
         const val CAMERA_PERMISSION_REQUEST_CODE = 2
+        const val STORAGE_PERMISSION_REQUEST_CODE = 3
     }
 
     private lateinit var path : String
@@ -64,10 +65,8 @@ class MainActivity : AppCompatActivity() {
         if( requestCode == CAMERA_REQUEST_CODE && resultCode== Activity.RESULT_OK){
 
             val contentValues = ContentValues().apply{
-                //put(MediaStore.Images.Media.TITLE,imageFileName+".jpg")
                 put(MediaStore.Images.Media.DISPLAY_NAME,imageFileName+".jpg")
-                //put(MediaStore.Images.Media.DATE_TAKEN,timeStamp)
-                //put(MediaStore.Images.Media.DATA,path)
+
                 put(MediaStore.Images.Media.MIME_TYPE,"image/jpeg")
                 put("_data",path)
             }
@@ -80,16 +79,29 @@ class MainActivity : AppCompatActivity() {
 
             findViewById<ImageView>(R.id.imageView).setImageBitmap( bitmap )
 
-            //Log.d("debug",sb.toString())
-
-            //val image = data?.extras?.get("data")?.let{
-            //    findViewById<ImageView>(R.id.imageView).setImageBitmap(it as Bitmap)
-            //}
 
         }
     }
 
+    private fun createSaveFileUri() : Uri {
+        timeStamp = SimpleDateFormat("yyMMdd_HHmmss", Locale.JAPAN).format(Date())
+        imageFileName = timeStamp
+        //Log.d("debug",imageFileName.substring(0,1))
+        val storageDir = Environment.getExternalStoragePublicDirectory( Environment.DIRECTORY_DCIM + "/casalack")
+        if(!storageDir.exists()){
+            storageDir.mkdir()
+        }
+        val file = File.createTempFile(
+                imageFileName,
+                ".jpg",
+                storageDir
+        )
 
+        path = file.absolutePath
+
+        return FileProvider.getUriForFile(this,"tokyo.mp015v.mycamera",file )
+
+    }
 
     private fun takePicture(){
         val intent = Intent( MediaStore.ACTION_IMAGE_CAPTURE).apply{
@@ -115,25 +127,6 @@ class MainActivity : AppCompatActivity() {
             arrayOf(Manifest.permission.CAMERA,Manifest.permission.WRITE_EXTERNAL_STORAGE),
             CAMERA_PERMISSION_REQUEST_CODE)
 
-    private fun createSaveFileUri() : Uri {
-        timeStamp = SimpleDateFormat("yyMMdd_HHmmss", Locale.JAPAN).format(Date())
-        imageFileName = timeStamp
-        //Log.d("debug",imageFileName.substring(0,1))
-        val storageDir = Environment.getExternalStoragePublicDirectory( Environment.DIRECTORY_DCIM + "/casalack")
-        if(!storageDir.exists()){
-            storageDir.mkdir()
-        }
-        val file = File.createTempFile(
-                imageFileName,
-                ".jpg",
-                storageDir
-        )
-
-        path = file.absolutePath
-
-        return FileProvider.getUriForFile(this,"tokyo.mp015v.mycamera",file )
-
-    }
 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         //super.onRequestPermissionsResult(requestCode, permissions, grantResults)
