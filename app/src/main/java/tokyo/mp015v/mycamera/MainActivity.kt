@@ -65,7 +65,7 @@ class MainActivity : AppCompatActivity() {
 
             val contentValues = ContentValues().apply{
                 //put(MediaStore.Images.Media.TITLE,imageFileName+".jpg")
-                //put(MediaStore.Images.Media.DISPLAY_NAME,imageFileName+".jpg")
+                put(MediaStore.Images.Media.DISPLAY_NAME,imageFileName+".jpg")
                 //put(MediaStore.Images.Media.DATE_TAKEN,timeStamp)
                 //put(MediaStore.Images.Media.DATA,path)
                 put(MediaStore.Images.Media.MIME_TYPE,"image/jpeg")
@@ -116,9 +116,9 @@ class MainActivity : AppCompatActivity() {
             CAMERA_PERMISSION_REQUEST_CODE)
 
     private fun createSaveFileUri() : Uri {
-        timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.JAPAN).format(Date())
-        imageFileName = "casalack_" + timeStamp
-
+        timeStamp = SimpleDateFormat("yyMMdd_HHmmss", Locale.JAPAN).format(Date())
+        imageFileName = timeStamp
+        //Log.d("debug",imageFileName.substring(0,1))
         val storageDir = Environment.getExternalStoragePublicDirectory( Environment.DIRECTORY_DCIM + "/casalack")
         if(!storageDir.exists()){
             storageDir.mkdir()
