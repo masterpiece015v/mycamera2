@@ -1,6 +1,7 @@
 package tokyo.mp015v.mycamera
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -97,7 +98,7 @@ class Main2Activity : AppCompatActivity() {
 
                 Log.d("debug",encodeToBase64( bitmap ))
 
-                val item = ListItem( bitmap, fileName)
+                val item = ListItem( bitmap, fileName , path )
                 listItem.add( item )
 
             }while( cursor.moveToNext())
@@ -107,7 +108,14 @@ class Main2Activity : AppCompatActivity() {
             findViewById<ListView>(R.id.listView).apply {
                 adapter = ListAdapter(applicationContext, R.layout.list_item, listItem )
                 setOnItemClickListener{parent, view, position, id ->
-                    Toast.makeText( applicationContext, position.toString(),Toast.LENGTH_LONG ).show()
+                    val item = parent.getItemAtPosition(position) as ListItem
+                    Toast.makeText( applicationContext, item.path ,Toast.LENGTH_LONG ).show()
+
+                    val intent = Intent().apply{
+                        setClassName( "tokyo.mp015v.mycamera","tokyo.mp015v.mycamera.Main3Activity")
+                        putExtra("path", item. path )
+                    }
+                    startActivity( intent )
                 }
             }
 

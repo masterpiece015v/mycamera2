@@ -56,6 +56,15 @@ class MainActivity : AppCompatActivity() {
         findViewById<Button>(R.id.button2).setOnClickListener {
             val intent = Intent().apply{
                 setClassName("tokyo.mp015v.mycamera","tokyo.mp015v.mycamera.Main2Activity")
+
+            }
+            startActivity( intent )
+        }
+
+        findViewById<Button>(R.id.button5).setOnClickListener {
+            val intent = Intent().apply{
+                setClassName( "tokyo.mp015v.mycamera","tokyo.mp015v.mycamera.Main3Activity")
+                putExtra("path",path )
             }
             startActivity( intent )
         }
@@ -63,7 +72,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onActivityResult( requestCode: Int,resultCode : Int,data:Intent?){
         if( requestCode == CAMERA_REQUEST_CODE && resultCode== Activity.RESULT_OK){
-
             val contentValues = ContentValues().apply{
                 put(MediaStore.Images.Media.DISPLAY_NAME,imageFileName+".jpg")
 
@@ -78,7 +86,6 @@ class MainActivity : AppCompatActivity() {
             val bitmap = BitmapFactory.decodeStream( inputStream )
 
             findViewById<ImageView>(R.id.imageView).setImageBitmap( bitmap )
-
 
         }
     }
