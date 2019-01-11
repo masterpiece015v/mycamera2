@@ -20,7 +20,7 @@ import java.io.FileInputStream
 
 class Main3Activity : AppCompatActivity() {
     val ENDPOINT_URL = "https://vision.googleapis.com/v1/images:annotate"
-    val API_KEY = "AIzaSyBCPU4CLhm_TwguXXXFYSvz20wWPqad1Rc"
+    val API_KEY = ""
     val FILE_NAME ="images/toshimio01.jpg"
 
     private fun encodeToBase64(image: Bitmap):String{
