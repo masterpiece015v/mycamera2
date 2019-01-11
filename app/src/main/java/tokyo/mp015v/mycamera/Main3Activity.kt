@@ -17,11 +17,13 @@ import com.squareup.moshi.Moshi
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.FileInputStream
+import com.github.kittinunf.fuel.httpPost
 
 class Main3Activity : AppCompatActivity() {
     val ENDPOINT_URL = "https://vision.googleapis.com/v1/images:annotate"
     val API_KEY = ""
     val FILE_NAME ="images/toshimio01.jpg"
+
 
     private fun encodeToBase64(image: Bitmap):String{
         val out = ByteArrayOutputStream()
@@ -60,10 +62,13 @@ class Main3Activity : AppCompatActivity() {
                     val req = moshi.adapter( RequestsJson::class.java)
                     j_str = req.toJson( requests ).toString()
 
-                    //j_str = j_str.replace('\"','\'')
+
+                    val list = listOf( Pair<String,String>("key",API_KEY))
 
                     //val (_,_,result) = Fuel.post(ENDPOINT_URL).header().body(j_str).responseString()
-
+                    ENDPOINT_URL.httpPost(listOf("key" to API_KEY) ).responseString{
+                        
+                    }
                     //val (data,_) = result
                     Log.d("debug",j_str)
                     //publishProgress( 0 )
