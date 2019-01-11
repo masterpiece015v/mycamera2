@@ -1,19 +1,19 @@
 package tokyo.mp015v.mycamera
 
-class RequestsJson(requests:Array<RequestJson>){
-    val requests = requests
-}
-class RequestJson(image:ImageJson,features:Array<FeatureJson>){
-    val image = image
-    val features = features
+data class RequestsJson(
+    val requests: List<Request>
+)
 
-}
-class ImageJson(content:String){
-    val content = content
-}
+data class Request(
+    val features: List<Feature>,
+    val image: Image
+)
 
-class FeatureJson(type : String, maxResults : Int){
-    val type = type
-    val maxResults = maxResults
-}
+data class Image(
+    val content: String
+)
 
+data class Feature(
+    val maxResults: Int,
+    val type: String
+)

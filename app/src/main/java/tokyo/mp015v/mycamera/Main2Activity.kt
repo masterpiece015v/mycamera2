@@ -96,7 +96,7 @@ class Main2Activity : AppCompatActivity() {
                 val inputStream = FileInputStream( File( path ) )
                 val bitmap = BitmapFactory.decodeStream( inputStream,null,options )
 
-                Log.d("debug",encodeToBase64( bitmap ))
+                //Log.d("debug",encodeToBase64( bitmap ))
 
                 val item = ListItem( bitmap, fileName , path )
                 listItem.add( item )
