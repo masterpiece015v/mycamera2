@@ -23,7 +23,7 @@ import java.io.FileInputStream
 
 class Main3Activity : AppCompatActivity() {
     val ENDPOINT_URL = "https://vision.googleapis.com/v1"
-    val API_KEY = "AIzaSyBCPU4CLhm_TwguXXXFYSvz20wWPqad1Rc"
+    val API_KEY = ""
     val LIKELIHOOD = mapOf("VERY_LIKELY" to "100%" , "LIKELY" to "75%" , "POSSIBLE" to "50%" , "UNLIKELY" to "25%" , "VERY_UNLIKELY" to "0%")
     lateinit var likelihood : String
 
@@ -45,9 +45,13 @@ class Main3Activity : AppCompatActivity() {
         Log.d( "debug", "path=" + intent.getStringExtra("path"))
 
         val inputStream = FileInputStream( File( path ) )
-        val bitmap = BitmapFactory.decodeStream( inputStream )
-        findViewById<ImageView>(R.id.imageView2).setImageBitmap( bitmap )
 
+        val options = BitmapFactory.Options().apply{
+            inSampleSize = 4
+        }
+        val bitmap = BitmapFactory.decodeStream( inputStream ,null,options )
+
+        findViewById<ImageView>(R.id.imageView2).setImageBitmap( bitmap  )
         findViewById<Button>(R.id.button4).setOnClickListener{
             object : AsyncTask<Void,Int,Void>(){
                 override fun doInBackground( vararg prm : Void?) : Void?{
