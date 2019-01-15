@@ -29,6 +29,8 @@ class ListAdapter(context: Context, resource : Int, items : List<ListItem>) : Ar
 
         val title = view.findViewById<TextView>(R.id.title)
         title.text = item.title
+        val size = view.findViewById<TextView>(R.id.size)
+        size.text = item.size.toString()
         return view
     }
 

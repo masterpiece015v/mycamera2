@@ -83,6 +83,7 @@ class Main2Activity : AppCompatActivity() {
             val str = String.format("MediaStore.Images=%s\n\n",cursor.getCount())
             lateinit var path : String
             lateinit var fileName : String
+            var size : Long
             val listItem = ArrayList<ListItem>()
 
             val options = BitmapFactory.Options().apply{
@@ -93,12 +94,15 @@ class Main2Activity : AppCompatActivity() {
 
                 path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DATA))
                 fileName = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DISPLAY_NAME ))
+                val sizeColumn = cursor.getColumnIndex( MediaStore.MediaColumns.SIZE)
+                size = cursor.getLong( sizeColumn )
+                val id = cursor.getLong(cursor.getColumnIndex("_id"))
+                val thumbnail = MediaStore.Images.Thumbnails.getThumbnail(contentResolver, id, MediaStore.Images.Thumbnails.MICRO_KIND, null)
+
                 val inputStream = FileInputStream( File( path ) )
-                val bitmap = BitmapFactory.decodeStream( inputStream,null,options )
+                //val bitmap = BitmapFactory.decodeStream( inputStream,null,options )
 
-                //Log.d("debug",encodeToBase64( bitmap ))
-
-                val item = ListItem( bitmap, fileName , path )
+                val item = ListItem( thumbnail , fileName, path ,size)
                 listItem.add( item )
 
             }while( cursor.moveToNext())
