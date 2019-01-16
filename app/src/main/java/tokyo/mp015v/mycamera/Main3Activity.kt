@@ -48,11 +48,13 @@ class Main3Activity : AppCompatActivity() {
         val inputStream = FileInputStream( File( path ) )
 
         val options = BitmapFactory.Options().apply{
-            inSampleSize = 4
+            inSampleSize = 2
         }
         val bitmap = BitmapFactory.decodeStream( inputStream ,null,options )
 
         findViewById<ImageView>(R.id.imageView2).setImageBitmap( bitmap  )
+
+
         findViewById<Button>(R.id.button4).setOnClickListener{
             object : AsyncTask<Void,Int,Void>(){
                 override fun doInBackground( vararg prm : Void?) : Void?{
@@ -67,11 +69,7 @@ class Main3Activity : AppCompatActivity() {
                                     "features:{type:\"FACE_DETECTION\",maxResults:5}"+
                                     "}]"+
                                 "}"
-
-                    //Fuel.post(path).body(body).responseString { request, response, result ->
-                    //    val resultJson = Json.parse( result.get()).asObject()
-                    //    Log.d( "debug","requests=" + resultJson.get("requests").asString())
-                    //}
+                    
 
                     val client = OkHttpClient()
                     val requestBody = RequestBody.create( MediaType.parse("application/json; charset=utf-8"),body)
