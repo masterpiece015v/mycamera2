@@ -12,6 +12,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import com.eclipsesource.json.Json
 import com.eclipsesource.json.JsonObject
+import com.eclipsesource.json.JsonValue
 import com.github.kittinunf.fuel.core.FuelManager
 import okhttp3.MediaType
 import okhttp3.OkHttpClient
@@ -23,7 +24,7 @@ import java.io.FileInputStream
 
 class Main3Activity : AppCompatActivity() {
     val ENDPOINT_URL = "https://vision.googleapis.com/v1"
-    val API_KEY = ""
+    val API_KEY = "AIzaSyBCPU4CLhm_TwguXXXFYSvz20wWPqad1Rc"
     val LIKELIHOOD = mapOf("VERY_LIKELY" to "100%" , "LIKELY" to "75%" , "POSSIBLE" to "50%" , "UNLIKELY" to "25%" , "VERY_UNLIKELY" to "0%")
     lateinit var likelihood : String
 
@@ -78,36 +79,34 @@ class Main3Activity : AppCompatActivity() {
 
                     val response = client.newCall( request ).execute()
 
-                    //Log.d("debug",response.body()!!.string())
-
                     val resultJson = Json.parse(response.body()!!.string()).asObject()
                     val responses = (resultJson.get("responses").asArray()[0]) as JsonObject
-                    val faceAnnotations = (responses.get("faceAnnotations").asArray()[0]) as JsonObject
-                    val boundingPoly = faceAnnotations.get("boundingPoly").asObject()
-                    val fdBoundingPoly = faceAnnotations.get("fdBoundingPoly").asObject()
-                    val rollAngle = faceAnnotations.get("rollAngle").asDouble()
-                    val panAngle = faceAnnotations.get("panAngle").asDouble()
-                    val tiltAngle = faceAnnotations.get("tiltAngle").asDouble()
-                    val detectionConfidence = faceAnnotations.get("detectionConfidence").asDouble()
-                    val landmarkingConfidence = faceAnnotations.get("landmarkingConfidence").asDouble()
-                    val joyLikelihood = faceAnnotations.get("joyLikelihood").asString()
-                    val sorrowLikelihood = faceAnnotations.get("sorrowLikelihood").asString()
-                    val angerLikelihood = faceAnnotations.get("angerLikelihood").asString()
-                    val surpriseLikelihood = faceAnnotations.get("surpriseLikelihood").asString()
-                    val underExposedLikelihood = faceAnnotations.get("underExposedLikelihood").asString()
-                    val blurredLikelihood = faceAnnotations.get("blurredLikelihood").asString()
-                    val headwearLikelihood = faceAnnotations.get("headwearLikelihood").asString()
+                    val faceAnnotations = responses.get("faceAnnotations").asArray()
 
-                    val outJson = faceAnnotations
+                    faceAnnotations.forEach{
+                        val boundingPoly = (it as JsonObject).get("boundingPoly").asObject()
+                        val fdBoundingPoly = (it as JsonObject).get("fdBoundingPoly").asObject()
+                        val rollAngle = (it as JsonObject).get("rollAngle").asDouble()
+                        val panAngle = (it as JsonObject).get("panAngle").asDouble()
+                        val tiltAngle = (it as JsonObject).get("tiltAngle").asDouble()
+                        val detectionConfidence = (it as JsonObject).get("detectionConfidence").asDouble()
+                        val landmarkingConfidence = (it as JsonObject).get("landmarkingConfidence").asDouble()
+                        val joyLikelihood = (it as JsonObject).get("joyLikelihood").asString()
+                        val sorrowLikelihood = (it as JsonObject).get("sorrowLikelihood").asString()
+                        val angerLikelihood = (it as JsonObject).get("angerLikelihood").asString()
+                        val surpriseLikelihood = (it as JsonObject).get("surpriseLikelihood").asString()
+                        val underExposedLikelihood = (it as JsonObject).get("underExposedLikelihood").asString()
+                        val blurredLikelihood = (it as JsonObject).get("blurredLikelihood").asString()
+                        val headwearLikelihood = (it as JsonObject).get("headwearLikelihood").asString()
+                        likelihood = "楽しさ${LIKELIHOOD.get(joyLikelihood)}\n悲しさ${LIKELIHOOD.get(sorrowLikelihood)}\n怒り${LIKELIHOOD.get(angerLikelihood)}\n驚き${LIKELIHOOD.get(surpriseLikelihood)}"
+                        val outJson = faceAnnotations
+                        Log.d("debug", "responses=" + outJson.toString() )
+                        Log.d("debug","楽しさ" + LIKELIHOOD.get(joyLikelihood) )
+                        Log.d("debug", "悲しさ" + LIKELIHOOD.get(sorrowLikelihood))
+                        Log.d("debug" , "怒り" + LIKELIHOOD.get(angerLikelihood))
+                        Log.d("debug","驚き" + LIKELIHOOD.get(surpriseLikelihood))
+                    }
 
-
-                    likelihood = "楽しさ${LIKELIHOOD.get(joyLikelihood)}\n悲しさ${LIKELIHOOD.get(sorrowLikelihood)}\n怒り${LIKELIHOOD.get(angerLikelihood)}\n驚き${LIKELIHOOD.get(surpriseLikelihood)}"
-                    Log.d("debug", "responses=" + outJson.toString() )
-                    Log.d("debug","楽しさ" + LIKELIHOOD.get(joyLikelihood) )
-                    Log.d("debug", "悲しさ" + LIKELIHOOD.get(sorrowLikelihood))
-                    Log.d("debug" , "怒り" + LIKELIHOOD.get(angerLikelihood))
-                    Log.d("debug","驚き" + LIKELIHOOD.get(surpriseLikelihood))
-                    //Log.d("debug", resultJson.toString())
                     return null
                 }
 

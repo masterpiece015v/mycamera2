@@ -72,7 +72,6 @@ class Main2Activity : AppCompatActivity() {
 
     }
 
-
     //リストに画像を表示する
     private fun setListView(){
         findViewById<Button>(R.id.button3).setOnClickListener {
@@ -86,9 +85,6 @@ class Main2Activity : AppCompatActivity() {
             var size : Long
             val listItem = ArrayList<ListItem>()
 
-            val options = BitmapFactory.Options().apply{
-                inSampleSize = 20
-            }
 
             do{
 
@@ -98,9 +94,6 @@ class Main2Activity : AppCompatActivity() {
                 size = cursor.getLong( sizeColumn )
                 val id = cursor.getLong(cursor.getColumnIndex("_id"))
                 val thumbnail = MediaStore.Images.Thumbnails.getThumbnail(contentResolver, id, MediaStore.Images.Thumbnails.MICRO_KIND, null)
-
-                val inputStream = FileInputStream( File( path ) )
-                //val bitmap = BitmapFactory.decodeStream( inputStream,null,options )
 
                 val item = ListItem( thumbnail , fileName, path ,size)
                 listItem.add( item )
