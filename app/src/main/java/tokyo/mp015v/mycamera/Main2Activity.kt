@@ -85,7 +85,6 @@ class Main2Activity : AppCompatActivity() {
             var size : Long
             val listItem = ArrayList<ListItem>()
 
-
             do{
 
                 path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DATA))
@@ -110,7 +109,8 @@ class Main2Activity : AppCompatActivity() {
 
                     val intent = Intent().apply{
                         setClassName( "tokyo.mp015v.mycamera","tokyo.mp015v.mycamera.Main3Activity")
-                        putExtra("path", item. path )
+                        putExtra("path", item.path )
+                        putExtra("size", item.size)
                     }
                     startActivity( intent )
                 }
