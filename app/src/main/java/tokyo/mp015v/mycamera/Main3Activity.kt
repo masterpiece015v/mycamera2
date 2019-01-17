@@ -76,6 +76,15 @@ class Main3Activity : AppCompatActivity() {
                 //val resultJson = Json.parse( res.await() ).asObject()
                 //val resultJson= JsonPost().getJsonObject(url,body).await()
                 val resJsonString = JsonPost().getJsonString(url,body).await()
+                val reqJson = RequestsJson( resJsonString )
+
+                //val boundingPoly = reqJson.getBoundingPoly(0)
+                //Log.d("debug","boundingPoly:" + boundingPoly.toString() )
+                //reqJson.faceAnnotations.forEach{
+                //    val boundingPoly = (it as JsonObject).get("boundingPoly").asObject()
+                //    Log.d("debug","boundingPoly:" + boundingPoly.toString() )
+                //}
+                /*
                 val resultJson = Json.parse( resJsonString).asObject()
 
                 val responses = (resultJson.get("responses").asArray()[0]) as JsonObject
@@ -103,8 +112,9 @@ class Main3Activity : AppCompatActivity() {
                     Log.d("debug", "悲しさ" + LIKELIHOOD.get(sorrowLikelihood))
                     Log.d("debug", "怒り" + LIKELIHOOD.get(angerLikelihood))
                     Log.d("debug", "驚き" + LIKELIHOOD.get(surpriseLikelihood))
-                }
-                findViewById<TextView>(R.id.textView3).text = likelihood
+                }*/
+
+                //findViewById<TextView>(R.id.textView3).text = likelihood
             }
         }
     }
