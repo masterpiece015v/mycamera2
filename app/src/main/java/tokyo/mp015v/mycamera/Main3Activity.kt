@@ -63,28 +63,9 @@ class Main3Activity : AppCompatActivity() {
                                     "features:{type:\"FACE_DETECTION\",maxResults:5}" +
                                 "}]" +
                                 "}"
-                //val client = OkHttpClient()
-                //val requestBody = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), body)
-                //val request = Request.Builder().url(ENDPOINT_URL + "/" + path).post(requestBody).build()
 
-                //Maiスレッドで通信をするとエラーになるのでコルーチン化
-                //val res: Deferred<String?> = GlobalScope.async(Dispatchers.Default,CoroutineStart.DEFAULT) {
-                    //val response = client.newCall(request).execute()
-                    //return@async response.body()!!.string()
-                //}
-
-                //val resultJson = Json.parse( res.await() ).asObject()
-                //val resultJson= JsonPost().getJsonObject(url,body).await()
                 val resJsonString = JsonPost().getJsonString(url,body).await()
-                val reqJson = RequestsJson( resJsonString )
 
-                //val boundingPoly = reqJson.getBoundingPoly(0)
-                //Log.d("debug","boundingPoly:" + boundingPoly.toString() )
-                //reqJson.faceAnnotations.forEach{
-                //    val boundingPoly = (it as JsonObject).get("boundingPoly").asObject()
-                //    Log.d("debug","boundingPoly:" + boundingPoly.toString() )
-                //}
-                /*
                 val resultJson = Json.parse( resJsonString).asObject()
 
                 val responses = (resultJson.get("responses").asArray()[0]) as JsonObject
@@ -92,6 +73,16 @@ class Main3Activity : AppCompatActivity() {
 
                 faceAnnotations.forEach {
                     val boundingPoly = (it as JsonObject).get("boundingPoly").asObject()
+
+                    val vertices = boundingPoly.get("vertices").asArray()
+
+                    vertices.forEach{
+                        val x = (it as JsonObject).get("x").asInt()
+                        val y = (it as JsonObject).get("y").asInt()
+
+                        Log.d("debug","x=${x},y=${y}")
+                    }
+
                     val fdBoundingPoly = (it as JsonObject).get("fdBoundingPoly").asObject()
                     val rollAngle = (it as JsonObject).get("rollAngle").asDouble()
                     val panAngle = (it as JsonObject).get("panAngle").asDouble()
@@ -108,13 +99,9 @@ class Main3Activity : AppCompatActivity() {
                     likelihood = "楽しさ${LIKELIHOOD.get(joyLikelihood)}\n悲しさ${LIKELIHOOD.get(sorrowLikelihood)}\n怒り${LIKELIHOOD.get(angerLikelihood)}\n驚き${LIKELIHOOD.get(surpriseLikelihood)}"
                     val outJson = faceAnnotations
                     Log.d("debug", "responses=" + outJson.toString())
-                    Log.d("debug", "楽しさ" + LIKELIHOOD.get(joyLikelihood))
-                    Log.d("debug", "悲しさ" + LIKELIHOOD.get(sorrowLikelihood))
-                    Log.d("debug", "怒り" + LIKELIHOOD.get(angerLikelihood))
-                    Log.d("debug", "驚き" + LIKELIHOOD.get(surpriseLikelihood))
-                }*/
+                }
 
-                //findViewById<TextView>(R.id.textView3).text = likelihood
+                findViewById<TextView>(R.id.textView3).text = likelihood
             }
         }
     }
