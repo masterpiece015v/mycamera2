@@ -1,13 +1,19 @@
 package tokyo.mp015v.mycamera
 
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Point
 import android.graphics.PorterDuffXfermode
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.provider.MediaStore
+import android.support.v4.app.NavUtils
+import android.support.v7.widget.Toolbar
 import android.util.Base64
 import android.util.Log
+import android.view.Menu
+import android.view.MenuItem
 import android.view.MotionEvent
 import android.widget.Button
 import android.widget.TextView
@@ -26,6 +32,8 @@ class Main3Activity : AppCompatActivity() {
     lateinit var likelihood : String
     lateinit var canvas : MyCanvas
     val rects = Rects()
+    lateinit var newBitmap : Bitmap
+
     private fun encodeToBase64(image: Bitmap):String{
         val out = ByteArrayOutputStream()
         image.compress(Bitmap.CompressFormat.JPEG,100,out)
@@ -37,6 +45,11 @@ class Main3Activity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main3)
+
+        //Toolbarを追加する
+        val toolbar = findViewById<Toolbar>(R.id.toolbar2)
+        setSupportActionBar( toolbar )
+        supportActionBar!!.setDisplayHomeAsUpEnabled( true )
 
         //キャンバスの設定
         canvas = this.findViewById<MyCanvas>(R.id.myCanvas1)
@@ -72,7 +85,7 @@ class Main3Activity : AppCompatActivity() {
 
         Log.d( "debug","scale:${scale}")
 
-        val newBitmap = Bitmap.createScaledBitmap(bitmap,(bitmapWidth * scale).toInt(),(bitmapHeight*scale).toInt(),false)
+        newBitmap = Bitmap.createScaledBitmap(bitmap,(bitmapWidth * scale).toInt(),(bitmapHeight*scale).toInt(),false)
 
         Log.d("debug","displaySize:${displaySize}")
 
@@ -93,62 +106,77 @@ class Main3Activity : AppCompatActivity() {
 
         canvas.showCanvas( newBitmap )
 
-        //ボタンのイベント
-        findViewById<Button>(R.id.button4).setOnClickListener {
-            GlobalScope.launch(Dispatchers.Main,CoroutineStart.DEFAULT) {
-                val url: String = ENDPOINT_URL + "/images:annotate?key=" + API_KEY
-                val body: String =
-                        "{requests:[" +
-                                "{image:{content:\"${encodeToBase64(newBitmap)}\"}," +
+    }
+    //Toolbarにtool_menuを追加する
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.tool2_menu,menu )
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    //Toolbarのitemにイベントを登録する
+    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+        val id = item!!.itemId
+        when( id ){
+            R.id.action_smile -> {
+                GlobalScope.launch(Dispatchers.Main,CoroutineStart.DEFAULT) {
+                    val url: String = ENDPOINT_URL + "/images:annotate?key=" + API_KEY
+                    val body: String =
+                            "{requests:[" +
+                                    "{image:{content:\"${encodeToBase64(newBitmap)}\"}," +
                                     "features:{type:\"FACE_DETECTION\",maxResults:5}" +
-                                "}]" +
-                                "}"
+                                    "}]" +
+                                    "}"
 
-                val resJsonString = JsonPost().getJsonString(url,body).await()
-                val resultJson = Json.parse( resJsonString).asObject()
-                val responses = (resultJson.get("responses").asArray()[0]) as JsonObject
-                val faceAnnotations = responses.get("faceAnnotations").asArray()
+                    val resJsonString = JsonPost().getJsonString(url,body).await()
+                    val resultJson = Json.parse( resJsonString).asObject()
+                    val responses = (resultJson.get("responses").asArray()[0]) as JsonObject
+                    val faceAnnotations = responses.get("faceAnnotations").asArray()
 
-                faceAnnotations.forEach {
-                    val boundingPoly = (it as JsonObject).get("boundingPoly").asObject()
+                    faceAnnotations.forEach {
+                        val boundingPoly = (it as JsonObject).get("boundingPoly").asObject()
 
-                    val vertices = boundingPoly.get("vertices").asArray()
+                        val vertices = boundingPoly.get("vertices").asArray()
 
-                    val x1 = vertices[0].asObject().get("x").asInt()
-                    val y1 = vertices[0].asObject().get("y").asInt()
-                    val x2 = vertices[2].asObject().get("x").asInt()
-                    val y2 = vertices[2].asObject().get("y").asInt()
+                        val x1 = vertices[0].asObject().get("x").asInt()
+                        val y1 = vertices[0].asObject().get("y").asInt()
+                        val x2 = vertices[2].asObject().get("x").asInt()
+                        val y2 = vertices[2].asObject().get("y").asInt()
 
-                    canvas.addRectPoint( x1,y1,x2,y2 )
+                        canvas.addRectPoint( x1,y1,x2,y2 )
 
-                    val fdBoundingPoly = (it as JsonObject).get("fdBoundingPoly").asObject()
+                        val fdBoundingPoly = (it as JsonObject).get("fdBoundingPoly").asObject()
 
-                    val rollAngle = (it as JsonObject).get("rollAngle").asDouble()
-                    val panAngle = (it as JsonObject).get("panAngle").asDouble()
-                    val tiltAngle = (it as JsonObject).get("tiltAngle").asDouble()
-                    val detectionConfidence = (it as JsonObject).get("detectionConfidence").asDouble()
-                    val landmarkingConfidence = (it as JsonObject).get("landmarkingConfidence").asDouble()
-                    val joyLikelihood = (it as JsonObject).get("joyLikelihood").asString()
-                    val sorrowLikelihood = (it as JsonObject).get("sorrowLikelihood").asString()
-                    val angerLikelihood = (it as JsonObject).get("angerLikelihood").asString()
-                    val surpriseLikelihood = (it as JsonObject).get("surpriseLikelihood").asString()
-                    val underExposedLikelihood = (it as JsonObject).get("underExposedLikelihood").asString()
-                    val blurredLikelihood = (it as JsonObject).get("blurredLikelihood").asString()
-                    val headwearLikelihood = (it as JsonObject).get("headwearLikelihood").asString()
-                    likelihood = "楽しさ${LIKELIHOOD.get(joyLikelihood)}\n悲しさ${LIKELIHOOD.get(sorrowLikelihood)}\n怒り${LIKELIHOOD.get(angerLikelihood)}\n驚き${LIKELIHOOD.get(surpriseLikelihood)}"
+                        val rollAngle = (it as JsonObject).get("rollAngle").asDouble()
+                        val panAngle = (it as JsonObject).get("panAngle").asDouble()
+                        val tiltAngle = (it as JsonObject).get("tiltAngle").asDouble()
+                        val detectionConfidence = (it as JsonObject).get("detectionConfidence").asDouble()
+                        val landmarkingConfidence = (it as JsonObject).get("landmarkingConfidence").asDouble()
+                        val joyLikelihood = (it as JsonObject).get("joyLikelihood").asString()
+                        val sorrowLikelihood = (it as JsonObject).get("sorrowLikelihood").asString()
+                        val angerLikelihood = (it as JsonObject).get("angerLikelihood").asString()
+                        val surpriseLikelihood = (it as JsonObject).get("surpriseLikelihood").asString()
+                        val underExposedLikelihood = (it as JsonObject).get("underExposedLikelihood").asString()
+                        val blurredLikelihood = (it as JsonObject).get("blurredLikelihood").asString()
+                        val headwearLikelihood = (it as JsonObject).get("headwearLikelihood").asString()
+                        likelihood = "楽しさ${LIKELIHOOD.get(joyLikelihood)}\n悲しさ${LIKELIHOOD.get(sorrowLikelihood)}\n怒り${LIKELIHOOD.get(angerLikelihood)}\n驚き${LIKELIHOOD.get(surpriseLikelihood)}"
 
-                    rects.addRect(Rect(Point(x1,y1),Point(x2,y2),likelihood))
+                        rects.addRect(Rect(Point(x1,y1),Point(x2,y2),likelihood))
 
-                    //canvas.addTextPoint( likelihood,x1+5,y2-5 )
+                        //canvas.addTextPoint( likelihood,x1+5,y2-5 )
 
-                    val outJson = faceAnnotations
-                    Log.d("debug", "responses=" + outJson.toString())
+                        val outJson = faceAnnotations
+                        Log.d("debug", "responses=" + outJson.toString())
+                    }
+                    canvas.showCanvas()
+
+                    //findViewById<TextView>(R.id.textView3).text = likelihood
                 }
-                canvas.showCanvas()
-
-                findViewById<TextView>(R.id.textView3).text = likelihood
+            }
+            android.R.id.home->{
+                NavUtils.navigateUpFromSameTask(this)
             }
         }
+        return super.onOptionsItemSelected(item)
     }
 
     inner class Rects{

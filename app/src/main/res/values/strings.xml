@@ -1,5 +1,4 @@
 <resources>
     <string name="app_name">MyCamera</string>
-    <string name="drawer_open">Open</string>
-    <string name="drawer_close">Close</string>
+    <string name="action_camera">カメラ</string>
 </resources>

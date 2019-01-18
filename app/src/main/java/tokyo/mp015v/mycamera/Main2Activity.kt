@@ -1,25 +1,39 @@
 package tokyo.mp015v.mycamera
 
 import android.Manifest
+import android.app.Activity
+import android.content.ContentValues
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
+import android.os.Environment
 import android.provider.MediaStore
 import android.support.v4.app.ActivityCompat
+import android.support.v4.app.NavUtils
 import android.support.v4.content.ContextCompat
-import android.support.v4.widget.DrawerLayout
-import android.support.v7.app.ActionBarDrawerToggle
+import android.support.v4.content.FileProvider
 import android.support.v7.widget.Toolbar
+import android.view.Menu
+import android.view.MenuItem
 import android.widget.*
-
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
 
 class Main2Activity : AppCompatActivity() {
+    companion object{
+        const val CAMERA_CODE = 1
+        const val CAMERA_PERMISSION_CODE = 2
+        const val STORAGE_PERMISSION_CODE = 3
+    }
 
-    lateinit var drawerLayout: DrawerLayout
+    lateinit var timeStamp:String
+    lateinit var imageFileName:String
+    lateinit var path:String
 
-    lateinit var drawerToggle :ActionBarDrawerToggle
-
+    //作るときの処理
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main2)
@@ -28,68 +42,151 @@ class Main2Activity : AppCompatActivity() {
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar( toolbar )
 
-        //Drawerの初期化
-        drawerLayout = findViewById(R.id.drawer_layout)
-        drawerToggle = ActionBarDrawerToggle(this , drawerLayout , R.string.drawer_open , R.string.drawer_close )
-        drawerLayout.addDrawerListener( drawerToggle )
-        drawerToggle.syncState()
-
-        //drawerToggle.isDrawerIndicatorEnabled = true
         //supportActionBar!!.setDisplayHomeAsUpEnabled( true )
-        //supportActionBar!!.setDisplayShowHomeEnabled( true )
-
-        //DrawerLayoutを設定する
-        //val drawerList = findViewById<ListView>(R.id.left_drawer)
-        //val drawerListAdapter = ArrayAdapter<String>(applicationContext,
-        //        android.R.layout.simple_list_item_1,
-        //        listOf<String>("カメラ"))
-        //drawerList.adapter = drawerListAdapter
     }
 
+    //Toolbarにtool_menuを追加する
+    override fun onCreateOptionsMenu(menu: Menu?): Boolean {
+        menuInflater.inflate(R.menu.tool_menu,menu )
+        return super.onCreateOptionsMenu(menu)
+    }
+
+    //Toolbarのitemにイベントを登録する
+    override fun onOptionsItemSelected(item: MenuItem?): Boolean {
+        val id = item!!.itemId
+        when( id ){
+            R.id.action_camera ->{
+                Intent(MediaStore.ACTION_IMAGE_CAPTURE).resolveActivity(packageManager)?.let{
+                    if( checkCameraPermission() ){
+                        takePicture()
+                    }else{
+                        grantCameraPermission()
+                    }
+                }?: Toast.makeText(this,"カメラを扱うアプリがありません", Toast.LENGTH_SHORT).show()
+            }
+            R.id.action_folder -> {
+
+            }
+        }
+        return super.onOptionsItemSelected(item)
+    }
+
+    //表示するときの処理
     override fun onResume(){
         super.onResume()
-        if( checkPermission()){
+        if( checkStoragePermission() ){
             setListView()
         }else{
-            grantStoragePermission()
+            grantWriteStoragePermission()
+        }
+    }
+    //ファイルを保存する際のフォルダのチェックやファイルの名前付けをする
+    private fun createSaveFileUri() : Uri {
+        timeStamp = SimpleDateFormat("yyMMdd_HHmmss", Locale.JAPAN).format(Date())
+        imageFileName = timeStamp
+        //Log.d("debug",imageFileName.substring(0,1))
+        val storageDir = Environment.getExternalStoragePublicDirectory( Environment.DIRECTORY_DCIM + "/casalack")
+        if(!storageDir.exists()){
+            storageDir.mkdir()
+        }
+        val file = File.createTempFile(
+                imageFileName,
+                ".jpg",
+                storageDir
+        )
+
+        path = file.absolutePath
+        return FileProvider.getUriForFile(this,"tokyo.mp015v.mycamera",file )
+    }
+
+    //カメラを起動する
+    private fun takePicture(){
+        val intent = Intent( MediaStore.ACTION_IMAGE_CAPTURE).apply{
+            addCategory(Intent.CATEGORY_DEFAULT)
+            putExtra( MediaStore.EXTRA_OUTPUT,createSaveFileUri())
+        }
+        startActivityForResult( intent , Main2Activity.CAMERA_CODE)
+    }
+
+    //カメラから戻ってきたときの処理
+    override fun onActivityResult( requestCode: Int,resultCode : Int,data:Intent?){
+        if( requestCode == Main2Activity.CAMERA_CODE && resultCode== Activity.RESULT_OK){
+            val contentValues = ContentValues().apply{
+                put(MediaStore.Images.Media.DISPLAY_NAME,imageFileName+".jpg")
+
+                put(MediaStore.Images.Media.MIME_TYPE,"image/jpeg")
+                put("_data",path)
+            }
+            contentResolver.insert(
+                    MediaStore.Images.Media.EXTERNAL_CONTENT_URI,contentValues
+            )
         }
     }
 
-    private fun checkPermission():Boolean{
-        val extraStoragePermission = PackageManager.PERMISSION_GRANTED ==
-                ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.READ_EXTERNAL_STORAGE)
-        return extraStoragePermission
+    //カメラパーミッションのチェック
+    private fun checkCameraPermission():Boolean{
+        //カメラへのアクセス
+        return PackageManager.PERMISSION_GRANTED ==
+                ContextCompat.checkSelfPermission(applicationContext,Manifest.permission.CAMERA)
     }
 
-    private fun grantStoragePermission() = ActivityCompat.requestPermissions(this,
+    //ストレージパーミッションのチェック
+    private fun checkStoragePermission():Boolean{
+        //外部ストレージの書き込み
+        return PackageManager.PERMISSION_GRANTED ==
+                ContextCompat.checkSelfPermission(applicationContext,Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    }
+
+    //カメラへのアクセス権を設定
+    private fun grantCameraPermission() = ActivityCompat.requestPermissions(this,
+            arrayOf(Manifest.permission.CAMERA,Manifest.permission.WRITE_EXTERNAL_STORAGE),
+            Main2Activity.CAMERA_PERMISSION_CODE)
+
+    //外部ストレージへの書き込み権を設定
+    private fun grantWriteStoragePermission() = ActivityCompat.requestPermissions(this,
             arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
-            MainActivity.STORAGE_PERMISSION_REQUEST_CODE)
+            Main2Activity.STORAGE_PERMISSION_CODE)
 
-
+    //許可ダイヤログの承認結果を受け取る
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         var isGranted = true
 
-        if( requestCode == MainActivity.STORAGE_PERMISSION_REQUEST_CODE){
-
-            if( grantResults.isNotEmpty()){
-                grantResults.forEach{
-                    if( it != PackageManager.PERMISSION_GRANTED){
-                        isGranted = false
+        when( requestCode){
+            Main2Activity.STORAGE_PERMISSION_CODE->{
+                if( grantResults.isNotEmpty()){
+                    grantResults.forEach{
+                        if( it != PackageManager.PERMISSION_GRANTED){
+                            isGranted = false
+                        }
                     }
+                }else{
+                    isGranted = false
                 }
-            }else{
-                isGranted = false
+
+                if( isGranted ){
+                    setListView()
+                }else{
+                    grantWriteStoragePermission()
+                }
             }
-        }else{
-            isGranted = false
-        }
+            Main2Activity.CAMERA_PERMISSION_CODE->{
+                if( grantResults.isNotEmpty()){
+                    grantResults.forEach{
+                        if( it != PackageManager.PERMISSION_GRANTED){
+                            isGranted = false
+                        }
+                    }
+                }else{
+                    isGranted = false
+                }
 
-        if( isGranted ){
-            setListView()
-        }else{
-            grantStoragePermission()
+                if( isGranted ){
+                    takePicture()
+                }else{
+                    grantCameraPermission()
+                }
+            }
         }
-
     }
 
     //リストにサムネイルを作成する

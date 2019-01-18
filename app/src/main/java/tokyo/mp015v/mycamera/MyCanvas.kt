@@ -28,8 +28,8 @@ class MyCanvas(context : Context, attr : AttributeSet) : View( context,attr) {
         textPaint.apply{
             setColor( Color.argb(255,255,0,0))
             textSize = 50f
-
         }
+
         if( flg == 0) {
             //描画クリア
             //canvas.drawColor(0, PorterDuff.Mode.CLEAR)

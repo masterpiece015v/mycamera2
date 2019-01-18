@@ -33,8 +33,12 @@
                 android:resource="@xml/file_path" />
         </provider>
 
-        <activity android:name=".MainActivity" />
-        <activity android:name=".Main3Activity"></activity>
+        <activity android:name=".Main3Activity">
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value="tokyo.mp015v.mycamera.Main2Activity"/>
+
+        </activity>
     </application>
 
 </manifest>
