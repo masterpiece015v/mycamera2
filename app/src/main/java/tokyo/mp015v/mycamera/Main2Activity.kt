@@ -3,26 +3,32 @@ package tokyo.mp015v.mycamera
 import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.drawable.Drawable
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
-import android.util.Base64
-import android.util.Log
+import android.support.v4.widget.DrawerLayout
+import android.support.v7.widget.Toolbar
 import android.widget.*
-import java.io.ByteArrayOutputStream
-import java.io.File
-import java.io.FileInputStream
+
 
 class Main2Activity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main2)
+        //Toolbarを追加する
+        val toolbar = findViewById<Toolbar>(R.id.toolbar)
+        setSupportActionBar( toolbar )
+        //DrawerLayoutを設定する
+        val drawerlyout = findViewById<DrawerLayout>(R.id.drawer_layout)
+        val drawerlist = findViewById<ListView>(R.id.left_drawer)
+
+        val list = arrayListOf<String>()
+        list.add("カメラ")
+
+        
     }
 
     override fun onResume(){
@@ -72,61 +78,49 @@ class Main2Activity : AppCompatActivity() {
 
     }
 
-    //リストに画像を表示する
+    //リストにサムネイルを作成する
     private fun setListView(){
-        findViewById<Button>(R.id.button3).setOnClickListener {
-            val selection = "_data like '%casalack%'"
-            val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI,null,selection,null,null)
-            cursor.moveToFirst()
+        val selection = "_data like '%casalack%'"
+        val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI,null,selection,null,null)
+        cursor.moveToFirst()
 
-            val str = String.format("MediaStore.Images=%s\n\n",cursor.getCount())
-            lateinit var path : String
-            lateinit var fileName : String
-            var size : Long
-            val listItem = ArrayList<ListItem>()
+        //val str = String.format("MediaStore.Images=%s\n\n",cursor.getCount())
 
-            do{
+        lateinit var path : String
+        lateinit var fileName : String
+        var size : Long
+        val listItem = ArrayList<ListItem>()
 
-                path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DATA))
-                fileName = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DISPLAY_NAME ))
-                val sizeColumn = cursor.getColumnIndex( MediaStore.MediaColumns.SIZE)
-                size = cursor.getLong( sizeColumn )
-                val id = cursor.getLong(cursor.getColumnIndex("_id"))
-                val thumbnail = MediaStore.Images.Thumbnails.getThumbnail(contentResolver, id, MediaStore.Images.Thumbnails.MICRO_KIND, null)
+        do{
 
-                val item = ListItem( thumbnail , fileName, path ,size)
-                listItem.add( item )
+            path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DATA))
+            fileName = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DISPLAY_NAME ))
+            val sizeColumn = cursor.getColumnIndex( MediaStore.MediaColumns.SIZE)
+            size = cursor.getLong( sizeColumn )
+            val id = cursor.getLong(cursor.getColumnIndex("_id"))
+            val thumbnail = MediaStore.Images.Thumbnails.getThumbnail(contentResolver, id, MediaStore.Images.Thumbnails.MICRO_KIND, null)
 
-            }while( cursor.moveToNext())
+            val item = ListItem( thumbnail , fileName, path ,size)
+            listItem.add( item )
 
-            cursor.close()
+        }while( cursor.moveToNext())
 
-            findViewById<ListView>(R.id.listView).apply {
-                adapter = ListAdapter(applicationContext, R.layout.list_item, listItem )
-                setOnItemClickListener{parent, view, position, id ->
-                    val item = parent.getItemAtPosition(position) as ListItem
-                    Toast.makeText( applicationContext, item.path ,Toast.LENGTH_LONG ).show()
+        cursor.close()
 
-                    val intent = Intent().apply{
-                        setClassName( "tokyo.mp015v.mycamera","tokyo.mp015v.mycamera.Main3Activity")
-                        putExtra("path", item.path )
-                        putExtra("size", item.size)
-                    }
-                    startActivity( intent )
+        findViewById<ListView>(R.id.listView).apply {
+            adapter = ListAdapter(applicationContext, R.layout.list_item, listItem )
+            setOnItemClickListener{parent, view, position, id ->
+                val item = parent.getItemAtPosition(position) as ListItem
+                Toast.makeText( applicationContext, item.path ,Toast.LENGTH_LONG ).show()
+
+                val intent = Intent().apply{
+                    setClassName( "tokyo.mp015v.mycamera","tokyo.mp015v.mycamera.Main3Activity")
+                    putExtra("path", item.path )
+                    putExtra("size", item.size)
                 }
+                startActivity( intent )
             }
-
         }
 
-    }
-
-
-    //bitmapをbase64にエンコード
-    private fun encodeToBase64(image: Bitmap):String{
-        val out = ByteArrayOutputStream()
-        image.compress(Bitmap.CompressFormat.JPEG,100,out)
-        val b : ByteArray = out.toByteArray()
-        val str = Base64.encodeToString( b , Base64.NO_WRAP )
-        return str
     }
 }
