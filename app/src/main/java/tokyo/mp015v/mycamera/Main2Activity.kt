@@ -9,26 +9,41 @@ import android.provider.MediaStore
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
 import android.support.v4.widget.DrawerLayout
+import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.widget.Toolbar
 import android.widget.*
 
 
 class Main2Activity : AppCompatActivity() {
 
+    lateinit var drawerLayout: DrawerLayout
+
+    lateinit var drawerToggle :ActionBarDrawerToggle
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main2)
+
         //Toolbarを追加する
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar( toolbar )
+
+        //Drawerの初期化
+        drawerLayout = findViewById(R.id.drawer_layout)
+        drawerToggle = ActionBarDrawerToggle(this , drawerLayout , R.string.drawer_open , R.string.drawer_close )
+        drawerLayout.addDrawerListener( drawerToggle )
+        drawerToggle.syncState()
+
+        //drawerToggle.isDrawerIndicatorEnabled = true
+        //supportActionBar!!.setDisplayHomeAsUpEnabled( true )
+        //supportActionBar!!.setDisplayShowHomeEnabled( true )
+
         //DrawerLayoutを設定する
-        val drawerlyout = findViewById<DrawerLayout>(R.id.drawer_layout)
-        val drawerlist = findViewById<ListView>(R.id.left_drawer)
-
-        val list = arrayListOf<String>()
-        list.add("カメラ")
-
-        
+        //val drawerList = findViewById<ListView>(R.id.left_drawer)
+        //val drawerListAdapter = ArrayAdapter<String>(applicationContext,
+        //        android.R.layout.simple_list_item_1,
+        //        listOf<String>("カメラ"))
+        //drawerList.adapter = drawerListAdapter
     }
 
     override fun onResume(){
@@ -43,7 +58,6 @@ class Main2Activity : AppCompatActivity() {
     private fun checkPermission():Boolean{
         val extraStoragePermission = PackageManager.PERMISSION_GRANTED ==
                 ContextCompat.checkSelfPermission(applicationContext, Manifest.permission.READ_EXTERNAL_STORAGE)
-
         return extraStoragePermission
     }
 
@@ -84,26 +98,22 @@ class Main2Activity : AppCompatActivity() {
         val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI,null,selection,null,null)
         cursor.moveToFirst()
 
-        //val str = String.format("MediaStore.Images=%s\n\n",cursor.getCount())
-
         lateinit var path : String
         lateinit var fileName : String
         var size : Long
         val listItem = ArrayList<ListItem>()
 
         do{
-
             path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DATA))
             fileName = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DISPLAY_NAME ))
             val sizeColumn = cursor.getColumnIndex( MediaStore.MediaColumns.SIZE)
             size = cursor.getLong( sizeColumn )
             val id = cursor.getLong(cursor.getColumnIndex("_id"))
             val thumbnail = MediaStore.Images.Thumbnails.getThumbnail(contentResolver, id, MediaStore.Images.Thumbnails.MICRO_KIND, null)
-
             val item = ListItem( thumbnail , fileName, path ,size)
             listItem.add( item )
 
-        }while( cursor.moveToNext())
+        }while( cursor.moveToNext() )
 
         cursor.close()
 
