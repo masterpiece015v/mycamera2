@@ -6,5 +6,5 @@
         android:icon="@drawable/ic_smile_black"
         android:title="action_smile"
         app:showAsAction="ifRoom"/>
-    
+
 </menu>
