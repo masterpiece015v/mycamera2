@@ -17,9 +17,14 @@ import android.support.v4.content.FileProvider
 import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.widget.Toolbar
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.*
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -55,59 +60,53 @@ class Main2Activity : AppCompatActivity() {
         )
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
+    }
 
+    //フォルダの作成
+    fun createFolder(){
         //コンテンツリゾルバ―より画像の情報を取得する
         val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI,null, null,null,null)
         cursor.moveToFirst()
         lateinit var path : String
-        lateinit var fileName : String
-        var size : Long
-        val listItem = ArrayList<String>()
+
         do{
             path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DATA))
-            fileName = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DISPLAY_NAME ))
-            val sizeColumn = cursor.getColumnIndex( MediaStore.MediaColumns.SIZE)
-            size = cursor.getLong( sizeColumn )
-            val id = cursor.getLong(cursor.getColumnIndex("_id"))
-            val thumbnail = MediaStore.Images.Thumbnails.getThumbnail(contentResolver, id, MediaStore.Images.Thumbnails.MICRO_KIND, null)
-            //val item = ListItem( thumbnail , fileName, path ,size)
-            val item = path
-            listItem.add( item )
+
+            val paths = path.split("/")
+            Log.d("debug","path:" + paths.size + "," + paths[1] )
         }while( cursor.moveToNext() )
+
         cursor.close()
 
         val folders = mutableListOf<Map<String,String>>()
-        val categoriesOfFolder = mutableListOf<MutableList<Map<String,String>>>()
-
         folders.add( mapOf("FOLDER" to "FOLDER1") )
         folders.add( mapOf("FOLDER" to "FOLDER2") )
-
+        val categoriesOfFolder = mutableListOf<MutableList<Map<String,String>>>()
         val cate1 = mutableListOf<Map<String,String>>()
         val cate2 = mutableListOf<Map<String,String>>()
-
         cate1.add( mapOf("CATEGORY" to "CATEGORY1") )
         cate1.add( mapOf("CATEGORY" to "CATEGORY2"))
-
         cate2.add( mapOf("CATEGORY" to "CATEGORY3") )
-
         categoriesOfFolder.add( cate1 )
         categoriesOfFolder.add( cate2 )
 
+
         var adapter = SimpleExpandableListAdapter(
-            applicationContext,
+                applicationContext,
                 folders,
                 android.R.layout.simple_expandable_list_item_1,
                 arrayOf("FOLDER"),
                 intArrayOf(android.R.id.text1,android.R.id.text2),
+
                 categoriesOfFolder,
                 android.R.layout.simple_expandable_list_item_1,
                 arrayOf("CATEGORY"),
                 intArrayOf(android.R.id.text1,android.R.id.text2)
+
         )
-        //ナビゲーションリストの設定
+        //ドロワーのナビゲーションリストの設定
         val listView = findViewById<ExpandableListView>(R.id.drawer_list)
         listView.setAdapter( adapter )
-
     }
 
     //Toolbarにtool_menuを追加する
@@ -139,6 +138,11 @@ class Main2Activity : AppCompatActivity() {
         super.onResume()
         if( checkStoragePermission() ){
             setListView()
+            //時間がかかるので非同期処理
+            GlobalScope.launch(Dispatchers.Main, CoroutineStart.DEFAULT){
+                createFolder()
+            }
+
         }else{
             grantWriteStoragePermission()
         }
@@ -198,7 +202,7 @@ class Main2Activity : AppCompatActivity() {
     private fun checkStoragePermission():Boolean{
         //外部ストレージの書き込み
         return PackageManager.PERMISSION_GRANTED ==
-                ContextCompat.checkSelfPermission(applicationContext,Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                ContextCompat.checkSelfPermission(applicationContext,Manifest.permission.WRITE_EXTERNAL_STORAGE) && PackageManager.PERMISSION_GRANTED == ContextCompat.checkSelfPermission(applicationContext,Manifest.permission.READ_EXTERNAL_STORAGE)
     }
 
     //カメラへのアクセス権を設定
@@ -207,9 +211,10 @@ class Main2Activity : AppCompatActivity() {
             Main2Activity.CAMERA_PERMISSION_CODE)
 
     //外部ストレージへの書き込み権を設定
-    private fun grantWriteStoragePermission() = ActivityCompat.requestPermissions(this,
-            arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
-            Main2Activity.STORAGE_PERMISSION_CODE)
+    private fun grantWriteStoragePermission(){
+        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), Main2Activity.STORAGE_PERMISSION_CODE)
+        ActivityCompat.requestPermissions( this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),Main2Activity.STORAGE_PERMISSION_CODE)
+    }
 
     //許可ダイヤログの承認結果を受け取る
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {

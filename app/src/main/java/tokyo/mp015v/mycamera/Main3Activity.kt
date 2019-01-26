@@ -53,19 +53,14 @@ class Main3Activity : AppCompatActivity() {
 
         //キャンバスの設定
         canvas = this.findViewById<MyCanvas>(R.id.myCanvas1)
-        //canvas.setOnClickListener{
 
-        //    Toast.makeText(applicationContext,"x=${touchX},y=${touchY}",Toast.LENGTH_SHORT).show()
-
-        //}
         //インテントから画像のパスを取得する
         val path = intent.getStringExtra("path")
         val size = intent.getLongExtra("size",0)
-        //Log.d("debug","size=" + size )
+
         //画像のビットマップを作成する
         val inputStream = FileInputStream( File( path ) )
         //画像の圧縮
-
         val options = BitmapFactory.Options().apply{
             if( size > 4000000) {
                 inSampleSize = 16
