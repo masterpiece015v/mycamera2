@@ -67,45 +67,24 @@ class Main2Activity : AppCompatActivity() {
         //コンテンツリゾルバ―より画像の情報を取得する
         val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI,null, null,null,null)
         cursor.moveToFirst()
-        lateinit var path : String
+
+        val directoryList = ArrayList<String>()
 
         do{
-            path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DATA))
+            val path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DATA))
 
             val paths = path.split("/")
             Log.d("debug","path:" + paths.size + "," + paths[1] )
+            directoryList.add(paths[1])
+
         }while( cursor.moveToNext() )
 
         cursor.close()
 
-        val folders = mutableListOf<Map<String,String>>()
-        folders.add( mapOf("FOLDER" to "FOLDER1") )
-        folders.add( mapOf("FOLDER" to "FOLDER2") )
-        val categoriesOfFolder = mutableListOf<MutableList<Map<String,String>>>()
-        val cate1 = mutableListOf<Map<String,String>>()
-        val cate2 = mutableListOf<Map<String,String>>()
-        cate1.add( mapOf("CATEGORY" to "CATEGORY1") )
-        cate1.add( mapOf("CATEGORY" to "CATEGORY2"))
-        cate2.add( mapOf("CATEGORY" to "CATEGORY3") )
-        categoriesOfFolder.add( cate1 )
-        categoriesOfFolder.add( cate2 )
 
-
-        var adapter = SimpleExpandableListAdapter(
-                applicationContext,
-                folders,
-                android.R.layout.simple_expandable_list_item_1,
-                arrayOf("FOLDER"),
-                intArrayOf(android.R.id.text1,android.R.id.text2),
-
-                categoriesOfFolder,
-                android.R.layout.simple_expandable_list_item_1,
-                arrayOf("CATEGORY"),
-                intArrayOf(android.R.id.text1,android.R.id.text2)
-
-        )
+        var adapter = ArrayAdapter<String>( applicationContext, android.R.layout.simple_list_item_1 , directoryList )
         //ドロワーのナビゲーションリストの設定
-        val listView = findViewById<ExpandableListView>(R.id.drawer_list)
+        val listView = findViewById<ListView>(R.id.drawer_list)
         listView.setAdapter( adapter )
     }
 
@@ -286,6 +265,7 @@ class Main2Activity : AppCompatActivity() {
         //リストビューのイベントを登録する
         findViewById<ListView>(R.id.listView).apply {
             adapter = ListAdapter(applicationContext, R.layout.list_item, listItem )
+
             setOnItemClickListener{parent, view, position, id ->
                 val item = parent.getItemAtPosition(position) as ListItem
                 Toast.makeText( applicationContext, item.path ,Toast.LENGTH_LONG ).show()
