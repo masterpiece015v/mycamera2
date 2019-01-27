@@ -39,6 +39,8 @@ class Main2Activity : AppCompatActivity() {
     lateinit var timeStamp:String
     lateinit var imageFileName:String
     lateinit var path:String
+    var depath = 0
+    var curPath:String? = null
 
     //作るときの処理
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -62,30 +64,79 @@ class Main2Activity : AppCompatActivity() {
         toggle.syncState()
     }
 
+    //表示するときの処理
+    override fun onResume(){
+        super.onResume()
+        if( checkStoragePermission() ){
+            setListView()
+            //時間がかかるので非同期処理
+            GlobalScope.launch(Dispatchers.Main, CoroutineStart.DEFAULT){
+                createFolder()
+            }
+        }else{
+            grantWriteStoragePermission()
+        }
+    }
+
     //フォルダの作成
     fun createFolder(){
+        val directoryList = ArrayList<String>()
+        depath = 1
+
         //コンテンツリゾルバ―より画像の情報を取得する
         val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI,null, null,null,null)
         cursor.moveToFirst()
-
-        val directoryList = ArrayList<String>()
-
         do{
             val path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DATA))
-
             val paths = path.split("/")
-            Log.d("debug","path:" + paths.size + "," + paths[1] )
-            directoryList.add(paths[1])
+            if( directoryList.any{ it == paths[depath] }){
 
+            }else {
+                directoryList.add(paths[depath])
+            }
         }while( cursor.moveToNext() )
-
         cursor.close()
-
-
         var adapter = ArrayAdapter<String>( applicationContext, android.R.layout.simple_list_item_1 , directoryList )
+
         //ドロワーのナビゲーションリストの設定
-        val listView = findViewById<ListView>(R.id.drawer_list)
-        listView.setAdapter( adapter )
+        findViewById<ListView>(R.id.drawer_list).apply{
+            setAdapter( adapter )
+
+            //イベント登録
+            setOnItemClickListener { parent, view, position, id ->
+                val item = parent.getItemAtPosition(position)
+
+                if( item.toString().equals("←")){
+                    depath-=1
+                }else{
+                    depath+=1
+                    curPath = "/" + item.toString()
+                }
+
+                val directoryList = ArrayList<String>()
+                directoryList.add("←")
+
+                val selection = "_data like '%${ curPath }%'"
+                val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI,null,selection,null,null)
+                cursor.moveToFirst()
+                do{
+                    val path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DATA ))
+                    val paths = path.split("/")
+                    if( directoryList.any{ it == paths[depath] }){
+
+                    }else {
+                        directoryList.add(paths[depath])
+                    }
+
+                    Log.d("debug","path=" + paths[depath] )
+                }while(cursor.moveToNext())
+                cursor.close()
+
+                var adapter = ArrayAdapter<String>( applicationContext, android.R.layout.simple_list_item_1 , directoryList )
+                findViewById<ListView>(R.id.drawer_list).adapter = adapter
+            }
+        }
+
     }
 
     //Toolbarにtool_menuを追加する
@@ -110,21 +161,6 @@ class Main2Activity : AppCompatActivity() {
 
         }
         return super.onOptionsItemSelected(item)
-    }
-
-    //表示するときの処理
-    override fun onResume(){
-        super.onResume()
-        if( checkStoragePermission() ){
-            setListView()
-            //時間がかかるので非同期処理
-            GlobalScope.launch(Dispatchers.Main, CoroutineStart.DEFAULT){
-                createFolder()
-            }
-
-        }else{
-            grantWriteStoragePermission()
-        }
     }
 
     //ファイルを保存する際のフォルダのチェックやファイルの名前付けをする
@@ -180,8 +216,7 @@ class Main2Activity : AppCompatActivity() {
     //ストレージパーミッションのチェック
     private fun checkStoragePermission():Boolean{
         //外部ストレージの書き込み
-        return PackageManager.PERMISSION_GRANTED ==
-                ContextCompat.checkSelfPermission(applicationContext,Manifest.permission.WRITE_EXTERNAL_STORAGE) && PackageManager.PERMISSION_GRANTED == ContextCompat.checkSelfPermission(applicationContext,Manifest.permission.READ_EXTERNAL_STORAGE)
+        return PackageManager.PERMISSION_GRANTED == ContextCompat.checkSelfPermission(applicationContext,Manifest.permission.WRITE_EXTERNAL_STORAGE)
     }
 
     //カメラへのアクセス権を設定
@@ -192,7 +227,6 @@ class Main2Activity : AppCompatActivity() {
     //外部ストレージへの書き込み権を設定
     private fun grantWriteStoragePermission(){
         ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE), Main2Activity.STORAGE_PERMISSION_CODE)
-        ActivityCompat.requestPermissions( this, arrayOf(Manifest.permission.READ_EXTERNAL_STORAGE),Main2Activity.STORAGE_PERMISSION_CODE)
     }
 
     //許可ダイヤログの承認結果を受け取る
