@@ -104,8 +104,7 @@ class Main2Activity : AppCompatActivity() {
 
         //ドロワーのナビゲーションリストの設定
         val dListView = findViewById<ListView>(R.id.drawer_list)
-
-        dListView.setAdapter( adapter )
+        dListView.adapter = adapter
 
         //イベント登録
         dListView.setOnItemClickListener { parent, view, position, id ->
@@ -118,24 +117,14 @@ class Main2Activity : AppCompatActivity() {
                 var newCurPath = "/"
                 curPath.split("/").forEachIndexed { index, s ->
                     if(index > 0 && curPath.split("/").size-1 > index ){
-                        if( index == 1 ){
-                            newCurPath = newCurPath + s
-                        }else{
-                            newCurPath = newCurPath + "/" + s
-                        }
-                        //Log.d("debug","index=" + index + ",s=" + s)
+                        newCurPath = if( index == 1 ) newCurPath + s else newCurPath + "/" + s
                     }
                 }
                 curPath = newCurPath
             }else{
                 depath+=1
                 //ルートはそのままディレクトリ名を付ける
-                if( curPath.equals("/") ) {
-                    curPath = curPath + item.dir_name
-                }else {
-                    curPath = curPath + "/" + item.dir_name
-                }
-
+                curPath = if( curPath.equals("/") ) curPath + item.dir_name else curPath + "/" + item.dir_name
             }
 
             //DrawerList用の設定
@@ -178,13 +167,9 @@ class Main2Activity : AppCompatActivity() {
     override fun onOptionsItemSelected(item: MenuItem?): Boolean {
         val id = item!!.itemId
         when( id ){
-            R.id.action_camera ->{
+            R.id.action_camera -> {
                 Intent(MediaStore.ACTION_IMAGE_CAPTURE).resolveActivity(packageManager)?.let{
-                    if( checkCameraPermission() ){
-                        takePicture()
-                    }else{
-                        grantCameraPermission()
-                    }
+                    if( checkCameraPermission() ) takePicture() else grantCameraPermission()
                 }?: Toast.makeText(this,"カメラを扱うアプリがありません", Toast.LENGTH_SHORT).show()
             }
 
