@@ -67,7 +67,6 @@ class Main2Activity : AppCompatActivity() {
     override fun onResume(){
         super.onResume()
 
-
         if( checkStoragePermission() ){
             setListView("casalack")
             //時間がかかるので非同期処理
@@ -86,15 +85,15 @@ class Main2Activity : AppCompatActivity() {
         depath = 1
 
         //コンテンツリゾルバ―より画像の情報を取得する
-        val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI,null, null,null,null)
+        val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI , null, null,null,null)
+
         cursor.moveToFirst()
         do{
             val path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DATA))
             val paths = path.split("/")
 
-            //directoryListに重複して登録されないようにする
-            if( !directoryList.any{ it.dir_name == paths[depath] }){
-                directoryList.add(DirListItem(dirBitMap, paths[depath] , "/") )
+            if( !directoryList.any { it.dir_name==paths[depath] }) {
+                directoryList.add(DirListItem(dirBitMap, paths[depath], "/"))
             }
 
         }while( cursor.moveToNext() )
@@ -109,11 +108,9 @@ class Main2Activity : AppCompatActivity() {
         //イベント登録
         dListView.setOnItemClickListener { parent, view, position, id ->
             val item = parent.getItemAtPosition(position) as DirListItem
-
             //←が選択されたら
             if( item.dir_name.equals("←")){
                 depath-=1
-
                 var newCurPath = "/"
                 curPath.split("/").forEachIndexed { index, s ->
                     if(index > 0 && curPath.split("/").size-1 > index ){
@@ -129,31 +126,33 @@ class Main2Activity : AppCompatActivity() {
 
             //DrawerList用の設定
             val directoryList = ArrayList<DirListItem>()
-
+            //ルートより深い場合
             if( depath > 1 ) {
                 directoryList.add(DirListItem(dirBitMap, "←", "/"))
             }
 
-            val selection = "_data like '%${ curPath }%'"
-            val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI,null,selection,null,null)
+            val selection = "_data like ?"
+            val args = arrayOf("%" + curPath + "%")
+            val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI,null , selection, args,null)
 
             cursor.moveToFirst()
+            val checkPath =cursor.getString(cursor.getColumnIndex( MediaStore.Images.Media.DATA)).split("/")[depath]
+            if( checkPath.contains(".jpg") || checkPath.contains(".JPG")){
+                setListView(curPath)
+                return@setOnItemClickListener
+            }
 
             do{
                 val path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DATA ))
                 val paths = path.split("/")
-
-                //directoryListに重複して登録されないようにする
-                if( !directoryList.any{ it.dir_name == paths[depath] }){
-                    directoryList.add( DirListItem(dirBitMap, paths[depath], curPath ) )
+                if( !directoryList.any { it.dir_name==paths[depath] }) {
+                    directoryList.add(DirListItem(dirBitMap, paths[depath], "/"))
                 }
-
             }while(cursor.moveToNext())
             cursor.close()
 
             val adapter = DirListAdapter( applicationContext, R.layout.dir_list_item , directoryList )
             findViewById<ListView>(R.id.drawer_list).adapter = adapter
-
         }
     }
 
@@ -194,6 +193,49 @@ class Main2Activity : AppCompatActivity() {
 
         path = file.absolutePath
         return FileProvider.getUriForFile(this,"tokyo.mp015v.mycamera",file )
+    }
+
+    //リストにサムネイルを作成する
+    private fun setListView(filter_path : String){
+        val selection = "_data like '%${filter_path}%'"
+        val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI,null,selection,null,null)
+        cursor.moveToFirst()
+
+        lateinit var path : String
+        lateinit var fileName : String
+        var size : Long
+        val listItem = ArrayList<ListItem>()
+
+        do{
+            path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DATA))
+            fileName = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DISPLAY_NAME ))
+            val sizeColumn = cursor.getColumnIndex( MediaStore.MediaColumns.SIZE)
+            size = cursor.getLong( sizeColumn )
+            val id = cursor.getLong(cursor.getColumnIndex("_id"))
+            val thumbnail = MediaStore.Images.Thumbnails.getThumbnail(contentResolver, id, MediaStore.Images.Thumbnails.MICRO_KIND, null)
+            val item = ListItem( thumbnail , fileName, path ,size)
+            listItem.add( item )
+
+        }while( cursor.moveToNext() )
+
+        cursor.close()
+
+        //リストビューのイベントを登録する
+        findViewById<ListView>(R.id.listView).apply {
+            adapter = ListAdapter(applicationContext, R.layout.list_item, listItem )
+
+            setOnItemClickListener{parent, view, position, id ->
+                val item = parent.getItemAtPosition(position) as ListItem
+                Toast.makeText( applicationContext, item.path ,Toast.LENGTH_LONG ).show()
+
+                val intent = Intent().apply{
+                    setClassName( "tokyo.mp015v.mycamera","tokyo.mp015v.mycamera.Main3Activity")
+                    putExtra("path", item.path )
+                    putExtra("size", item.size)
+                }
+                startActivity( intent )
+            }
+        }
     }
 
     //カメラを起動する
@@ -283,49 +325,5 @@ class Main2Activity : AppCompatActivity() {
                 }
             }
         }
-    }
-
-    //リストにサムネイルを作成する
-    private fun setListView(path : String){
-        val selection = "_data like '%${path}%'"
-        val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI,null,selection,null,null)
-        cursor.moveToFirst()
-
-        lateinit var path : String
-        lateinit var fileName : String
-        var size : Long
-        val listItem = ArrayList<ListItem>()
-
-        do{
-            path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DATA))
-            fileName = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DISPLAY_NAME ))
-            val sizeColumn = cursor.getColumnIndex( MediaStore.MediaColumns.SIZE)
-            size = cursor.getLong( sizeColumn )
-            val id = cursor.getLong(cursor.getColumnIndex("_id"))
-            val thumbnail = MediaStore.Images.Thumbnails.getThumbnail(contentResolver, id, MediaStore.Images.Thumbnails.MICRO_KIND, null)
-            val item = ListItem( thumbnail , fileName, path ,size)
-            listItem.add( item )
-
-        }while( cursor.moveToNext() )
-
-        cursor.close()
-
-        //リストビューのイベントを登録する
-        findViewById<ListView>(R.id.listView).apply {
-            adapter = ListAdapter(applicationContext, R.layout.list_item, listItem )
-
-            setOnItemClickListener{parent, view, position, id ->
-                val item = parent.getItemAtPosition(position) as ListItem
-                Toast.makeText( applicationContext, item.path ,Toast.LENGTH_LONG ).show()
-
-                val intent = Intent().apply{
-                    setClassName( "tokyo.mp015v.mycamera","tokyo.mp015v.mycamera.Main3Activity")
-                    putExtra("path", item.path )
-                    putExtra("size", item.size)
-                }
-                startActivity( intent )
-            }
-        }
-
     }
 }
