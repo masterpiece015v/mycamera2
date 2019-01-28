@@ -12,13 +12,11 @@ import android.os.Bundle
 import android.os.Environment
 import android.provider.MediaStore
 import android.support.v4.app.ActivityCompat
-import android.support.v4.app.NavUtils
 import android.support.v4.content.ContextCompat
 import android.support.v4.content.FileProvider
 import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.widget.Toolbar
-import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.*
@@ -41,7 +39,7 @@ class Main2Activity : AppCompatActivity() {
     lateinit var imageFileName:String
     lateinit var path:String
     var depath = 0
-    var curPath:String? = null
+    var curPath:String = "/"
 
     //作るときの処理
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -71,7 +69,7 @@ class Main2Activity : AppCompatActivity() {
 
 
         if( checkStoragePermission() ){
-            setListView()
+            setListView("casalack")
             //時間がかかるので非同期処理
             GlobalScope.launch(Dispatchers.Main, CoroutineStart.DEFAULT){
                 createFolder()
@@ -93,11 +91,12 @@ class Main2Activity : AppCompatActivity() {
         do{
             val path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DATA))
             val paths = path.split("/")
-            if( directoryList.any{ it.dir_name == paths[depath] }){
 
-            }else {
+            //directoryListに重複して登録されないようにする
+            if( !directoryList.any{ it.dir_name == paths[depath] }){
                 directoryList.add(DirListItem(dirBitMap, paths[depath] , "/") )
             }
+
         }while( cursor.moveToNext() )
         cursor.close()
 
@@ -110,40 +109,63 @@ class Main2Activity : AppCompatActivity() {
 
         //イベント登録
         dListView.setOnItemClickListener { parent, view, position, id ->
-                val item = parent.getItemAtPosition(position) as DirListItem
+            val item = parent.getItemAtPosition(position) as DirListItem
 
-                if( item.dir_name.equals("←")){
-                    depath-=1
-                }else{
-                    depath+=1
-                    curPath = "/" + item.dir_name
+            //←が選択されたら
+            if( item.dir_name.equals("←")){
+                depath-=1
+
+                var newCurPath = "/"
+                curPath.split("/").forEachIndexed { index, s ->
+                    if(index > 0 && curPath.split("/").size-1 > index ){
+                        if( index == 1 ){
+                            newCurPath = newCurPath + s
+                        }else{
+                            newCurPath = newCurPath + "/" + s
+                        }
+                        //Log.d("debug","index=" + index + ",s=" + s)
+                    }
+                }
+                curPath = newCurPath
+            }else{
+                depath+=1
+                //ルートはそのままディレクトリ名を付ける
+                if( curPath.equals("/") ) {
+                    curPath = curPath + item.dir_name
+                }else {
+                    curPath = curPath + "/" + item.dir_name
                 }
 
-                val directoryList = ArrayList<DirListItem>()
-                directoryList.add(DirListItem(dirBitMap,"←","/"))
+            }
 
-                val selection = "_data like '%${ curPath }%'"
+            //DrawerList用の設定
+            val directoryList = ArrayList<DirListItem>()
 
-                val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI,null,selection,null,null)
-                cursor.moveToFirst()
-                do{
-                    val path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DATA ))
-                    val paths = path.split("/")
-                    if( directoryList.any{ it.dir_name == paths[depath] }){
+            if( depath > 1 ) {
+                directoryList.add(DirListItem(dirBitMap, "←", "/"))
+            }
 
-                    }else {
-                        directoryList.add( DirListItem(dirBitMap, paths[depath], curPath!! ) )
-                    }
+            val selection = "_data like '%${ curPath }%'"
+            val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI,null,selection,null,null)
 
-                    Log.d("debug","path=" + paths[depath] )
-                }while(cursor.moveToNext())
-                cursor.close()
+            cursor.moveToFirst()
 
-                var adapter = DirListAdapter( applicationContext, R.layout.dir_list_item , directoryList )
-                findViewById<ListView>(R.id.drawer_list).adapter = adapter
-            
+            do{
+                val path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DATA ))
+                val paths = path.split("/")
+
+                //directoryListに重複して登録されないようにする
+                if( !directoryList.any{ it.dir_name == paths[depath] }){
+                    directoryList.add( DirListItem(dirBitMap, paths[depath], curPath ) )
+                }
+
+            }while(cursor.moveToNext())
+            cursor.close()
+
+            val adapter = DirListAdapter( applicationContext, R.layout.dir_list_item , directoryList )
+            findViewById<ListView>(R.id.drawer_list).adapter = adapter
+
         }
-
     }
 
     //Toolbarにtool_menuを追加する
@@ -253,7 +275,7 @@ class Main2Activity : AppCompatActivity() {
                 }
 
                 if( isGranted ){
-                    setListView()
+                    setListView("casalack")
                 }else{
                     grantWriteStoragePermission()
                 }
@@ -279,8 +301,8 @@ class Main2Activity : AppCompatActivity() {
     }
 
     //リストにサムネイルを作成する
-    private fun setListView(){
-        val selection = "_data like '%casalack%'"
+    private fun setListView(path : String){
+        val selection = "_data like '%${path}%'"
         val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI,null,selection,null,null)
         cursor.moveToFirst()
 
