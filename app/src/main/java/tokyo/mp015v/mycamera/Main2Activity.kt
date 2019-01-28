@@ -84,7 +84,6 @@ class Main2Activity : AppCompatActivity() {
     //フォルダの作成
     fun createFolder(){
         val dirBitMap = BitmapFactory.decodeResource(resources, R.drawable.ic_dir_black)
-
         val directoryList = ArrayList<DirListItem>()
         depath = 1
 
@@ -94,43 +93,43 @@ class Main2Activity : AppCompatActivity() {
         do{
             val path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DATA))
             val paths = path.split("/")
-            if( directoryList.any{ it.name == paths[depath] }){
+            if( directoryList.any{ it.dir_name == paths[depath] }){
 
             }else {
                 directoryList.add(DirListItem(dirBitMap, paths[depath] , "/") )
             }
         }while( cursor.moveToNext() )
         cursor.close()
-        var adapter = DirListAdapter( applicationContext, android.R.layout.simple_list_item_1 , directoryList )
+
+        var adapter = DirListAdapter( applicationContext, R.layout.dir_list_item , directoryList )
 
         //ドロワーのナビゲーションリストの設定
-        findViewById<ListView>(R.id.drawer_list).apply{
-            setAdapter( adapter )
+        val dListView = findViewById<ListView>(R.id.drawer_list)
 
-            //イベント登録
-            setOnItemClickListener { parent, view, position, id ->
+        dListView.setAdapter( adapter )
+
+        //イベント登録
+        dListView.setOnItemClickListener { parent, view, position, id ->
                 val item = parent.getItemAtPosition(position) as DirListItem
 
-                if( item.name.equals("←")){
+                if( item.dir_name.equals("←")){
                     depath-=1
                 }else{
                     depath+=1
-                    curPath = "/" + item.name
+                    curPath = "/" + item.dir_name
                 }
 
                 val directoryList = ArrayList<DirListItem>()
                 directoryList.add(DirListItem(dirBitMap,"←","/"))
 
                 val selection = "_data like '%${ curPath }%'"
-                Log.d("debug","curPath=" + curPath )
 
                 val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI,null,selection,null,null)
                 cursor.moveToFirst()
-
                 do{
                     val path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DATA ))
                     val paths = path.split("/")
-                    if( directoryList.any{ it.name == paths[depath] }){
+                    if( directoryList.any{ it.dir_name == paths[depath] }){
 
                     }else {
                         directoryList.add( DirListItem(dirBitMap, paths[depath], curPath!! ) )
@@ -142,7 +141,7 @@ class Main2Activity : AppCompatActivity() {
 
                 var adapter = DirListAdapter( applicationContext, R.layout.dir_list_item , directoryList )
                 findViewById<ListView>(R.id.drawer_list).adapter = adapter
-            }
+            
         }
 
     }

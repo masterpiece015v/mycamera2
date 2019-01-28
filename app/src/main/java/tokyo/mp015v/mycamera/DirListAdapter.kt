@@ -24,10 +24,10 @@ class DirListAdapter(context: Context, resource : Int, items : List<DirListItem>
 
         val item = mItems.get( position )
 
-        val thumbnail = view.findViewById<ImageView>(R.id.thumbnail)
+        val thumbnail = view.findViewById<ImageView>(R.id.dir_thum)
         thumbnail.setImageBitmap( item.dir_thum )
 
-        val name = view.findViewById<TextView>(R.id.name)
+        val name = view.findViewById<TextView>(R.id.dir_name)
         name.text = item.dir_name
 
         return view
