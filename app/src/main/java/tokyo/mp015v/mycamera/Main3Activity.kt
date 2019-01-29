@@ -1,10 +1,8 @@
 package tokyo.mp015v.mycamera
 
+import android.app.Activity
 import android.content.Intent
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Point
-import android.graphics.PorterDuffXfermode
+import android.graphics.*
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.MediaStore
@@ -33,6 +31,7 @@ class Main3Activity : AppCompatActivity() {
     lateinit var canvas : MyCanvas
     val rects = Rects()
     lateinit var newBitmap : Bitmap
+    lateinit var curPath : String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,7 +40,7 @@ class Main3Activity : AppCompatActivity() {
         //Toolbarを追加する
         val toolbar = findViewById<Toolbar>(R.id.toolbar2)
         setSupportActionBar( toolbar )
-        supportActionBar!!.setDisplayHomeAsUpEnabled( true )
+        //supportActionBar!!.setDisplayHomeAsUpEnabled( true )
 
         //キャンバスの設定
         canvas = this.findViewById<MyCanvas>(R.id.myCanvas1)
@@ -49,7 +48,7 @@ class Main3Activity : AppCompatActivity() {
         //インテントから画像のパスを取得する
         val path = intent.getStringExtra("path")
         val size = intent.getLongExtra("size",0)
-
+        this.curPath = intent.getStringExtra( "curPath")
         //画像のビットマップを作成する
         val inputStream = FileInputStream( File( path ) )
         //画像の圧縮
@@ -80,7 +79,7 @@ class Main3Activity : AppCompatActivity() {
         //Log.d( "debug","scale:${scale}")
 
         newBitmap = Bitmap.createScaledBitmap(bitmap,(bitmapWidth * scale).toInt(),(bitmapHeight*scale).toInt(),false)
-        Log.d("debut" , "newBitmap.byte=" + bitmap.byteCount )
+        //Log.d("debut" , "newBitmap.byte=" + bitmap.byteCount )
         //Log.d("debug","displaySize:${displaySize}")
 
         //キャンバスをタッチしたときのイベント
@@ -166,8 +165,13 @@ class Main3Activity : AppCompatActivity() {
 
                 }
             }
-            android.R.id.home->{
-                NavUtils.navigateUpFromSameTask(this)
+            R.id.action_back->{
+                //NavUtils.navigateUpFromSameTask(this)
+                val intent = Intent()
+                intent.putExtra("curPath",this.curPath )
+                setResult(Activity.RESULT_OK,intent)
+                finish()
+
             }
         }
         return super.onOptionsItemSelected(item)

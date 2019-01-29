@@ -19,6 +19,7 @@ import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.widget.Toolbar
 import android.util.Log
+import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.*
@@ -35,6 +36,7 @@ class Main2Activity : AppCompatActivity() {
         const val CAMERA_CODE = 1
         const val CAMERA_PERMISSION_CODE = 2
         const val STORAGE_PERMISSION_CODE = 3
+        const val Main3Activity_CODE = 4
     }
 
     lateinit var timeStamp:String
@@ -48,7 +50,7 @@ class Main2Activity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main2)
 
-        Log.d("***LifeCycle***", "onCreate")
+        //Log.d("***LifeCycle***", "onCreate")
 
         //Toolbarを追加する
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
@@ -66,26 +68,19 @@ class Main2Activity : AppCompatActivity() {
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
 
-        curPath = if (savedInstanceState != null) savedInstanceState.getString("memCurPath") else "casalack"
+        curPath =  "casalack"
 
-        Log.d("***onCreate***","1:" + curPath )
-    }
-
-    override fun onSaveInstanceState(outState: Bundle?) {
-        super.onSaveInstanceState(outState)
-        Log.d("***Save***" , "1:" + curPath )
-        outState!!.putString("memCurPath",curPath )
-
+        //Log.d("***onCreate***","1:" + curPath )
     }
 
     //表示するときの処理
     override fun onResume(){
         super.onResume()
 
-        Log.d("***LifeCycle***","onResume()")
+        //Log.d("***LifeCycle***","onResume()")
 
         if( checkStoragePermission() ){
-            Log.d("debug","1:" + curPath )
+            //Log.d("debug","1:" + curPath )
             setListView(curPath)
             //時間がかかるので非同期処理
             GlobalScope.launch(Dispatchers.Main, CoroutineStart.DEFAULT){
@@ -94,19 +89,6 @@ class Main2Activity : AppCompatActivity() {
         }else{
             grantWriteStoragePermission()
         }
-    }
-
-
-    //onStop()
-    override fun onStop(){
-        super.onStop()
-        Log.d("***LifeCycle***","onStop()")
-    }
-
-    //onPause()
-    override fun onPause(){
-        super.onPause()
-        Log.d("***LifeCycle***","onPause()")
     }
 
     //フォルダの作成
@@ -171,11 +153,14 @@ class Main2Activity : AppCompatActivity() {
 
             cursor.moveToFirst()
             val checkPath =cursor.getString(cursor.getColumnIndex( MediaStore.Images.Media.DATA)).split("/")[depath]
-            if( checkPath.contains(".jpg") || checkPath.contains(".JPG")){
 
+            //直下に画像が見つかった時の処理
+            if( checkPath.contains(".jpg") || checkPath.contains(".JPG")){
                 curPath = tempCurPath
-                Log.d("debug","3:" + curPath )
+                //Log.d("debug","3:" + curPath )
+                findViewById<DrawerLayout>(R.id.drawer_layout).closeDrawer(Gravity.LEFT)
                 setListView(tempCurPath)
+                depath--
                 return@setOnItemClickListener
             }
 
@@ -270,8 +255,10 @@ class Main2Activity : AppCompatActivity() {
                     setClassName( "tokyo.mp015v.mycamera","tokyo.mp015v.mycamera.Main3Activity")
                     putExtra("path", item.path )
                     putExtra("size", item.size)
+                    putExtra( "curPath" , curPath)
                 }
-                startActivity( intent )
+                //startActivity( intent )
+                startActivityForResult(intent , Main3Activity_CODE)
             }
         }
     }
@@ -285,8 +272,10 @@ class Main2Activity : AppCompatActivity() {
         startActivityForResult( intent , Main2Activity.CAMERA_CODE)
     }
 
-    //カメラから戻ってきたときの処理
+    //他のActivityから戻ってきたときの処理
     override fun onActivityResult( requestCode: Int,resultCode : Int,data:Intent?){
+        //Log.d("***onActivityResult***" , "4:")
+        //カメラから戻ってきたときの処理
         if( requestCode == Main2Activity.CAMERA_CODE && resultCode== Activity.RESULT_OK){
             val contentValues = ContentValues().apply{
                 put(MediaStore.Images.Media.DISPLAY_NAME,imageFileName+".jpg")
@@ -296,6 +285,10 @@ class Main2Activity : AppCompatActivity() {
             contentResolver.insert(
                     MediaStore.Images.Media.EXTERNAL_CONTENT_URI,contentValues
             )
+        }else if( requestCode == Main3Activity_CODE && resultCode == Activity.RESULT_OK){
+            //Main3Activityからの復帰
+            this.curPath = data!!.getStringExtra("curPath")
+            //Log.d("***LifeCycle***" , "onActionResult=" + this.curPath )
         }
     }
 
