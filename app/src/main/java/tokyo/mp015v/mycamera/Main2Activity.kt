@@ -10,6 +10,7 @@ import android.net.Uri
 import android.support.v7.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Environment
+import android.os.PersistableBundle
 import android.provider.MediaStore
 import android.support.v4.app.ActivityCompat
 import android.support.v4.content.ContextCompat
@@ -47,9 +48,11 @@ class Main2Activity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main2)
 
+        Log.d("***LifeCycle***", "onCreate")
+
         //Toolbarを追加する
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
-        setSupportActionBar( toolbar )
+        setSupportActionBar(toolbar)
 
         //ツールバーにナビゲーションを表示するボタン
         val drawerLayout = findViewById<DrawerLayout>(R.id.drawer_layout)
@@ -63,13 +66,23 @@ class Main2Activity : AppCompatActivity() {
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
 
-        //
-        curPath = "casalack"
+        curPath = if (savedInstanceState != null) savedInstanceState.getString("memCurPath") else "casalack"
+
+        Log.d("***onCreate***","1:" + curPath )
+    }
+
+    override fun onSaveInstanceState(outState: Bundle?) {
+        super.onSaveInstanceState(outState)
+        Log.d("***Save***" , "1:" + curPath )
+        outState!!.putString("memCurPath",curPath )
+
     }
 
     //表示するときの処理
     override fun onResume(){
         super.onResume()
+
+        Log.d("***LifeCycle***","onResume()")
 
         if( checkStoragePermission() ){
             Log.d("debug","1:" + curPath )
@@ -81,6 +94,19 @@ class Main2Activity : AppCompatActivity() {
         }else{
             grantWriteStoragePermission()
         }
+    }
+
+
+    //onStop()
+    override fun onStop(){
+        super.onStop()
+        Log.d("***LifeCycle***","onStop()")
+    }
+
+    //onPause()
+    override fun onPause(){
+        super.onPause()
+        Log.d("***LifeCycle***","onPause()")
     }
 
     //フォルダの作成
@@ -207,7 +233,7 @@ class Main2Activity : AppCompatActivity() {
     }
 
     //リストにサムネイルを作成する
-    private fun setListView(filter_path : String){
+    private fun setListView( filter_path : String ){
         val selection = "_data like ?"
         val args = arrayOf("%${filter_path}%")
         val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI,null,selection,args,null)
