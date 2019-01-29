@@ -49,13 +49,9 @@ class Main2Activity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main2)
-
-        //Log.d("***LifeCycle***", "onCreate")
-
         //Toolbarを追加する
         val toolbar = findViewById<Toolbar>(R.id.toolbar)
         setSupportActionBar(toolbar)
-
         //ツールバーにナビゲーションを表示するボタン
         val drawerLayout = findViewById<DrawerLayout>(R.id.drawer_layout)
         val toggle = ActionBarDrawerToggle(
@@ -90,6 +86,7 @@ class Main2Activity : AppCompatActivity() {
             grantWriteStoragePermission()
         }
     }
+
     //ルートディレクトリを取得する
     fun getRootFolder() : HashSet<String>{
         val retSet = HashSet<String>()
@@ -329,9 +326,9 @@ class Main2Activity : AppCompatActivity() {
     }
 
     //カメラへのアクセス権を設定
-    private fun grantCameraPermission() = ActivityCompat.requestPermissions(this,
-            arrayOf(Manifest.permission.CAMERA,Manifest.permission.WRITE_EXTERNAL_STORAGE),
-            Main2Activity.CAMERA_PERMISSION_CODE)
+    private fun grantCameraPermission() {
+        ActivityCompat.requestPermissions(this,arrayOf(Manifest.permission.CAMERA, Manifest.permission.WRITE_EXTERNAL_STORAGE), Main2Activity.CAMERA_PERMISSION_CODE)
+    }
 
     //外部ストレージへの書き込み権を設定
     private fun grantWriteStoragePermission(){
@@ -342,7 +339,7 @@ class Main2Activity : AppCompatActivity() {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         var isGranted = true
 
-        when( requestCode){
+        when( requestCode ){
             Main2Activity.STORAGE_PERMISSION_CODE->{
                 if( grantResults.isNotEmpty()){
                     grantResults.forEach{
@@ -360,6 +357,7 @@ class Main2Activity : AppCompatActivity() {
                     grantWriteStoragePermission()
                 }
             }
+
             Main2Activity.CAMERA_PERMISSION_CODE->{
                 if( grantResults.isNotEmpty()){
                     grantResults.forEach{
