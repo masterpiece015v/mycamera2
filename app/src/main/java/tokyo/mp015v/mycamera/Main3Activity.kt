@@ -34,14 +34,6 @@ class Main3Activity : AppCompatActivity() {
     val rects = Rects()
     lateinit var newBitmap : Bitmap
 
-    private fun encodeToBase64(image: Bitmap):String{
-        val out = ByteArrayOutputStream()
-        image.compress(Bitmap.CompressFormat.JPEG,100,out)
-        val b : ByteArray = out.toByteArray()
-        val str = Base64.encodeToString( b , Base64.NO_WRAP )
-        return str
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main3)
@@ -181,6 +173,16 @@ class Main3Activity : AppCompatActivity() {
         return super.onOptionsItemSelected(item)
     }
 
+    //Base64へエンコード
+    private fun encodeToBase64(image: Bitmap):String{
+        val out = ByteArrayOutputStream()
+        image.compress(Bitmap.CompressFormat.JPEG,100,out)
+        val b : ByteArray = out.toByteArray()
+        val str = Base64.encodeToString( b , Base64.NO_WRAP )
+        return str
+    }
+
+    //正方形のインナークラス
     inner class Rects{
         val rects : ArrayList<Rect> = arrayListOf()
         fun addRect( rect : Rect ){

@@ -17,6 +17,7 @@ import android.support.v4.content.FileProvider
 import android.support.v4.widget.DrawerLayout
 import android.support.v7.app.ActionBarDrawerToggle
 import android.support.v7.widget.Toolbar
+import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.*
@@ -37,9 +38,9 @@ class Main2Activity : AppCompatActivity() {
 
     lateinit var timeStamp:String
     lateinit var imageFileName:String
-    lateinit var path:String
+    lateinit var picPath:String
     var depath = 0
-    var curPath:String = "/"
+    lateinit var curPath:String
 
     //作るときの処理
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -61,6 +62,9 @@ class Main2Activity : AppCompatActivity() {
         )
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
+
+        //
+        curPath = "casalack"
     }
 
     //表示するときの処理
@@ -68,7 +72,8 @@ class Main2Activity : AppCompatActivity() {
         super.onResume()
 
         if( checkStoragePermission() ){
-            setListView("casalack")
+            Log.d("debug","1:" + curPath )
+            setListView(curPath)
             //時間がかかるので非同期処理
             GlobalScope.launch(Dispatchers.Main, CoroutineStart.DEFAULT){
                 createFolder()
@@ -82,6 +87,8 @@ class Main2Activity : AppCompatActivity() {
     fun createFolder(){
         val dirBitMap = BitmapFactory.decodeResource(resources, R.drawable.ic_dir_black)
         val directoryList = ArrayList<DirListItem>()
+        var tempCurPath = "/"
+
         depath = 1
 
         //コンテンツリゾルバ―より画像の情報を取得する
@@ -105,23 +112,23 @@ class Main2Activity : AppCompatActivity() {
         val dListView = findViewById<ListView>(R.id.drawer_list)
         dListView.adapter = adapter
 
-        //イベント登録
+        //イベント発生時のメソッド
         dListView.setOnItemClickListener { parent, view, position, id ->
             val item = parent.getItemAtPosition(position) as DirListItem
             //←が選択されたら
             if( item.dir_name.equals("←")){
                 depath-=1
                 var newCurPath = "/"
-                curPath.split("/").forEachIndexed { index, s ->
-                    if(index > 0 && curPath.split("/").size-1 > index ){
+                tempCurPath.split("/").forEachIndexed { index, s ->
+                    if(index > 0 && tempCurPath.split("/").size-1 > index ){
                         newCurPath = if( index == 1 ) newCurPath + s else newCurPath + "/" + s
                     }
                 }
-                curPath = newCurPath
+                tempCurPath = newCurPath
             }else{
                 depath+=1
                 //ルートはそのままディレクトリ名を付ける
-                curPath = if( curPath.equals("/") ) curPath + item.dir_name else curPath + "/" + item.dir_name
+                tempCurPath = if( tempCurPath.equals("/") ) tempCurPath + item.dir_name else tempCurPath + "/" + item.dir_name
             }
 
             //DrawerList用の設定
@@ -132,13 +139,17 @@ class Main2Activity : AppCompatActivity() {
             }
 
             val selection = "_data like ?"
-            val args = arrayOf("%" + curPath + "%")
+            val args = arrayOf("%" + tempCurPath + "%")
+            Log.d("debug","2:" + tempCurPath )
             val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI,null , selection, args,null)
 
             cursor.moveToFirst()
             val checkPath =cursor.getString(cursor.getColumnIndex( MediaStore.Images.Media.DATA)).split("/")[depath]
             if( checkPath.contains(".jpg") || checkPath.contains(".JPG")){
-                setListView(curPath)
+
+                curPath = tempCurPath
+                Log.d("debug","3:" + curPath )
+                setListView(tempCurPath)
                 return@setOnItemClickListener
             }
 
@@ -191,14 +202,15 @@ class Main2Activity : AppCompatActivity() {
                 storageDir
         )
 
-        path = file.absolutePath
+        picPath = file.absolutePath
         return FileProvider.getUriForFile(this,"tokyo.mp015v.mycamera",file )
     }
 
     //リストにサムネイルを作成する
     private fun setListView(filter_path : String){
-        val selection = "_data like '%${filter_path}%'"
-        val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI,null,selection,null,null)
+        val selection = "_data like ?"
+        val args = arrayOf("%${filter_path}%")
+        val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI,null,selection,args,null)
         cursor.moveToFirst()
 
         lateinit var path : String
@@ -252,9 +264,8 @@ class Main2Activity : AppCompatActivity() {
         if( requestCode == Main2Activity.CAMERA_CODE && resultCode== Activity.RESULT_OK){
             val contentValues = ContentValues().apply{
                 put(MediaStore.Images.Media.DISPLAY_NAME,imageFileName+".jpg")
-
                 put(MediaStore.Images.Media.MIME_TYPE,"image/jpeg")
-                put("_data",path)
+                put("_data",picPath)
             }
             contentResolver.insert(
                     MediaStore.Images.Media.EXTERNAL_CONTENT_URI,contentValues
