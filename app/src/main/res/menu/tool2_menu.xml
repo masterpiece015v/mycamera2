@@ -7,7 +7,7 @@
         android:icon="@drawable/ic_back_black"
         android:title="action_back"
         app:showAsAction="ifRoom" />
-    
+
     <item android:id="@+id/action_smile"
         android:icon="@drawable/ic_smile_black"
         android:title="action_smile"

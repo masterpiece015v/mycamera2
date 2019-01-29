@@ -90,6 +90,36 @@ class Main2Activity : AppCompatActivity() {
             grantWriteStoragePermission()
         }
     }
+    //ルートディレクトリを取得する
+    fun getRootFolder() : HashSet<String>{
+        val retSet = HashSet<String>()
+        //コンテンツリゾルバ―より画像の情報を取得する
+        val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI , null, null,null,null)
+
+        cursor.moveToFirst()
+        do{
+            val path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DATA))
+            val paths = path.split("/")
+            Log.d( "*****" , "paths=" + paths[1])
+            retSet.add( paths[1] )
+
+        }while( cursor.moveToNext() )
+        cursor.close()
+
+        return retSet
+    }
+    //下位層のフォルダを取得する
+    fun getChildFolder(parentFolder : String) : HashSet<String>{
+        val retSet = HashSet<String>()
+        //コンテンツリゾルバ―より画像の情報を取得する
+        val selection ="_data like ?"
+        val args = arrayOf( "${parentFolder}%")
+        val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI , null, selection,args,null)
+
+        
+
+        return retSet
+    }
 
     //フォルダの作成
     fun createFolder(){
@@ -99,20 +129,13 @@ class Main2Activity : AppCompatActivity() {
 
         depath = 1
 
-        //コンテンツリゾルバ―より画像の情報を取得する
-        val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI , null, null,null,null)
+        //ルートフォルダの取得
+        val set = getRootFolder()
 
-        cursor.moveToFirst()
-        do{
-            val path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DATA))
-            val paths = path.split("/")
-
-            if( !directoryList.any { it.dir_name==paths[depath] }) {
-                directoryList.add(DirListItem(dirBitMap, paths[depath], "/"))
-            }
-
-        }while( cursor.moveToNext() )
-        cursor.close()
+        set.forEach {
+            Log.d("******" , "it=" + it)
+            directoryList.add( DirListItem(dirBitMap, it , "/" + it ))
+        }
 
         var adapter = DirListAdapter( applicationContext, R.layout.dir_list_item , directoryList )
 
