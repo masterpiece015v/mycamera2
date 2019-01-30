@@ -66,27 +66,36 @@ class Main2Activity : AppCompatActivity() {
 
         curPath =  "casalack"
 
-        //Log.d("***onCreate***","1:" + curPath )
     }
 
     //表示するときの処理
     override fun onResume(){
         super.onResume()
 
-        //Log.d("***LifeCycle***","onResume()")
-
+        //ファイルアクセス権のチェック
         if( checkStoragePermission() ){
-            //Log.d("debug","1:" + curPath )
+            //サムネイルを表示
             setListView(curPath)
-            //時間がかかるので非同期処理
+            //フォルダの作成は時間がかかるので非同期処理
             GlobalScope.launch(Dispatchers.Main, CoroutineStart.DEFAULT){
-                createFolder()
+                createDirMap()
+                //createFolder()
             }
         }else{
             grantWriteStoragePermission()
         }
     }
+    fun createDirMap(){
+        val dirMap = DirMap()
+        val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI , null, null,null,null)
+        cursor.moveToFirst()
+        do{
+            val path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DATA))
+            dirMap.putPath( path )
 
+        }while( cursor.moveToNext() )
+        cursor.close()
+    }
     //ルートディレクトリを取得する
     fun getRootFolder() : HashSet<String>{
         val retSet = HashSet<String>()

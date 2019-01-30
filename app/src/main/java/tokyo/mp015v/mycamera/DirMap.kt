@@ -5,8 +5,8 @@ import android.util.Log
 class DirMap{
     val map = HashMap<String,DirProperty>()
 
+    //パスを入れるとマップを構成する
     fun putPath( abPath : String){
-
         val abPaths = abPath.split( "/" )
         var key = "/"
         for( i in 1..abPaths.size){
@@ -20,9 +20,15 @@ class DirMap{
         if( !map.isEmpty() ){
             //マップにkeyが存在する
             if( map.containsKey(key) ){
-
+                val pro = map.get(key)
+                pro!!.count += 1
+                pro!!.imgFileNameList.add( imgFileName )
+                map.put( key , pro )
             }else{
-
+                val pro = DirProperty()
+                pro!!.count = 1
+                pro!!.imgFileNameList.add( imgFileName )
+                map.put( key , pro )
             }
 
         }
