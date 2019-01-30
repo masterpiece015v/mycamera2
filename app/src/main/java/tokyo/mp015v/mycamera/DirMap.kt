@@ -8,13 +8,11 @@ class DirMap{
     //パスを入れるとマップを構成する
     fun putPath( abPath : String){
         val abPaths = abPath.split( "/" )
-        var key = "/"
-        for( i in 1..abPaths.size){
-            key = key + abPaths[i]
+        var key = "/" + abPaths[1]
+        for( i in 2..abPaths.size-2){
+            key = key + "/" + abPaths[i]
         }
         val imgFileName = abPaths[ abPaths.size - 1]
-
-        Log.d( "***DirMap***","key=" + key )
 
         //マップが空ではない
         if( !map.isEmpty() ){
@@ -30,7 +28,11 @@ class DirMap{
                 pro!!.imgFileNameList.add( imgFileName )
                 map.put( key , pro )
             }
-
+        }else{
+            val pro = DirProperty()
+            pro!!.count = 1
+            pro!!.imgFileNameList.add( imgFileName )
+            map.put( key , pro )
         }
     }
 }

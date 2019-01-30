@@ -23,10 +23,7 @@ import android.view.Gravity
 import android.view.Menu
 import android.view.MenuItem
 import android.widget.*
-import kotlinx.coroutines.CoroutineStart
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.*
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -64,7 +61,7 @@ class Main2Activity : AppCompatActivity() {
         drawerLayout.addDrawerListener(toggle)
         toggle.syncState()
 
-        curPath =  "casalack"
+        this.curPath = "casalack"
 
     }
 
@@ -79,12 +76,13 @@ class Main2Activity : AppCompatActivity() {
             //フォルダの作成は時間がかかるので非同期処理
             GlobalScope.launch(Dispatchers.Main, CoroutineStart.DEFAULT){
                 createDirMap()
-                //createFolder()
             }
         }else{
             grantWriteStoragePermission()
         }
     }
+
+    //dirMapを作る
     fun createDirMap(){
         val dirMap = DirMap()
         val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI , null, null,null,null)
@@ -95,7 +93,13 @@ class Main2Activity : AppCompatActivity() {
 
         }while( cursor.moveToNext() )
         cursor.close()
+
+        dirMap.map.forEach{
+            Log.d("***dirMap***" , it.key )
+        }
+
     }
+
     //ルートディレクトリを取得する
     fun getRootFolder() : HashSet<String>{
         val retSet = HashSet<String>()
@@ -121,8 +125,6 @@ class Main2Activity : AppCompatActivity() {
         val selection ="_data like ?"
         val args = arrayOf( "${parentFolder}%")
         val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI , null, selection,args,null)
-
-        
 
         return retSet
     }
@@ -186,7 +188,7 @@ class Main2Activity : AppCompatActivity() {
             //直下に画像が見つかった時の処理
             if( checkPath.contains(".jpg") || checkPath.contains(".JPG")){
                 curPath = tempCurPath
-                //Log.d("debug","3:" + curPath )
+
                 findViewById<DrawerLayout>(R.id.drawer_layout).closeDrawer(Gravity.LEFT)
                 setListView(tempCurPath)
                 depath--
@@ -231,11 +233,13 @@ class Main2Activity : AppCompatActivity() {
     private fun createSaveFileUri() : Uri {
         timeStamp = SimpleDateFormat("yyMMdd_HHmmss", Locale.JAPAN).format(Date())
         imageFileName = timeStamp
-        //Log.d("debug",imageFileName.substring(0,1))
+
+        //DCIMにcasalackがなければ作る
         val storageDir = Environment.getExternalStoragePublicDirectory( Environment.DIRECTORY_DCIM + "/casalack")
         if(!storageDir.exists()){
             storageDir.mkdir()
         }
+
         val file = File.createTempFile(
                 imageFileName,
                 ".jpg",
@@ -251,26 +255,31 @@ class Main2Activity : AppCompatActivity() {
         val selection = "_data like ?"
         val args = arrayOf("%${filter_path}%")
         val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI,null,selection,args,null)
-        cursor.moveToFirst()
-
-        lateinit var path : String
-        lateinit var fileName : String
-        var size : Long
         val listItem = ArrayList<ListItem>()
 
-        do{
-            path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DATA))
-            fileName = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DISPLAY_NAME ))
-            val sizeColumn = cursor.getColumnIndex( MediaStore.MediaColumns.SIZE)
-            size = cursor.getLong( sizeColumn )
-            val id = cursor.getLong(cursor.getColumnIndex("_id"))
-            val thumbnail = MediaStore.Images.Thumbnails.getThumbnail(contentResolver, id, MediaStore.Images.Thumbnails.MICRO_KIND, null)
-            val item = ListItem( thumbnail , fileName, path ,size)
-            listItem.add( item )
+        //画像がない場合は何もしない
+        if( cursor.count > 0 ) {
 
-        }while( cursor.moveToNext() )
+            cursor.moveToFirst()
 
-        cursor.close()
+            lateinit var path: String
+            lateinit var fileName: String
+            var size: Long
+
+            do {
+                path = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DATA))
+                fileName = cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media.DISPLAY_NAME))
+                val sizeColumn = cursor.getColumnIndex(MediaStore.MediaColumns.SIZE)
+                size = cursor.getLong(sizeColumn)
+                val id = cursor.getLong(cursor.getColumnIndex("_id"))
+                val thumbnail = MediaStore.Images.Thumbnails.getThumbnail(contentResolver, id, MediaStore.Images.Thumbnails.MICRO_KIND, null)
+                val item = ListItem(thumbnail, fileName, path, size)
+                listItem.add(item)
+
+            } while (cursor.moveToNext())
+
+            cursor.close()
+        }
 
         //リストビューのイベントを登録する
         findViewById<ListView>(R.id.listView).apply {
@@ -317,15 +326,13 @@ class Main2Activity : AppCompatActivity() {
         }else if( requestCode == Main3Activity_CODE && resultCode == Activity.RESULT_OK){
             //Main3Activityからの復帰
             this.curPath = data!!.getStringExtra("curPath")
-            //Log.d("***LifeCycle***" , "onActionResult=" + this.curPath )
         }
     }
 
     //カメラパーミッションのチェック
     private fun checkCameraPermission():Boolean{
         //カメラへのアクセス
-        return PackageManager.PERMISSION_GRANTED ==
-                ContextCompat.checkSelfPermission(applicationContext,Manifest.permission.CAMERA)
+        return PackageManager.PERMISSION_GRANTED == ContextCompat.checkSelfPermission(applicationContext,Manifest.permission.CAMERA)
     }
 
     //ストレージパーミッションのチェック
@@ -360,8 +367,18 @@ class Main2Activity : AppCompatActivity() {
                     isGranted = false
                 }
 
+                //ストレージパーミッションを許可した場合(はじめての処理になるはず)
                 if( isGranted ){
-                    setListView("casalack")
+
+                    //DCIMにcasalackがなければ作る
+                    val storageDir = Environment.getExternalStoragePublicDirectory( Environment.DIRECTORY_DCIM + "/casalack")
+                    if(!storageDir.exists()){
+                        storageDir.mkdir()
+                    }
+                    //casalackのリストビューを表示する
+                    setListView( "casalack" )
+
+
                 }else{
                     grantWriteStoragePermission()
                 }
@@ -378,6 +395,7 @@ class Main2Activity : AppCompatActivity() {
                     isGranted = false
                 }
 
+                //カメラパーミッションを許可した場合
                 if( isGranted ){
                     takePicture()
                 }else{
