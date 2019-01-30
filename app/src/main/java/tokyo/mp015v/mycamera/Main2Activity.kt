@@ -41,6 +41,7 @@ class Main2Activity : AppCompatActivity() {
     lateinit var picPath:String
     var depath = 0
     lateinit var curPath:String
+    val dirMap = DirMap()
 
     //作るときの処理
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -76,6 +77,7 @@ class Main2Activity : AppCompatActivity() {
             //フォルダの作成は時間がかかるので非同期処理
             GlobalScope.launch(Dispatchers.Main, CoroutineStart.DEFAULT){
                 createDirMap()
+                createDrawerView()
             }
         }else{
             grantWriteStoragePermission()
@@ -84,22 +86,95 @@ class Main2Activity : AppCompatActivity() {
 
     //dirMapを作る
     fun createDirMap(){
-        val dirMap = DirMap()
         val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI , null, null,null,null)
         cursor.moveToFirst()
         do{
             val path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DATA))
             dirMap.putPath( path )
-
         }while( cursor.moveToNext() )
         cursor.close()
+    }
 
-        dirMap.map.forEach{
-            Log.d("***dirMap***" , it.key )
+    //DrawerViewを作成する
+    fun createDrawerView(){
+        val dirBitMap = BitmapFactory.decodeResource(resources, R.drawable.ic_dir_black)
+        val directoryList = ArrayList<DirListItem>()
+
+        dirMap.getAbPathArrayList().forEach {
+            directoryList.add( DirListItem(dirBitMap, it.split("/")[it.split("/").size - 1] , it ))
+        }
+
+        var adapter = DirListAdapter( applicationContext, R.layout.dir_list_item , directoryList )
+
+        //ドロワーのナビゲーションリストの設定
+        val dListView = findViewById<ListView>(R.id.drawer_list)
+        dListView.adapter = adapter
+
+        //イベント発生時のメソッド
+
+        dListView.setOnItemClickListener { parent, view, position, id ->
+            val item = parent.getItemAtPosition(position) as DirListItem
+            setListView( item.dir_path )
+            curPath = item.dir_path
+            findViewById<DrawerLayout>(R.id.drawer_layout).closeDrawer(Gravity.LEFT)
+            /*
+
+            //←が選択されたら
+            if( item.dir_name.equals("←")){
+                depath-=1
+                var newCurPath = "/"
+                tempCurPath.split("/").forEachIndexed { index, s ->
+                    if(index > 0 && tempCurPath.split("/").size-1 > index ){
+                        newCurPath = if( index == 1 ) newCurPath + s else newCurPath + "/" + s
+                    }
+                }
+                tempCurPath = newCurPath
+            }else{
+                depath+=1
+                //ルートはそのままディレクトリ名を付ける
+                tempCurPath = if( tempCurPath.equals("/") ) tempCurPath + item.dir_name else tempCurPath + "/" + item.dir_name
+            }
+
+            //DrawerList用の設定
+            val directoryList = ArrayList<DirListItem>()
+            //ルートより深い場合
+            if( depath > 1 ) {
+                directoryList.add(DirListItem(dirBitMap, "←", "/"))
+            }
+
+            val selection = "_data like ?"
+            val args = arrayOf("%" + tempCurPath + "%")
+            Log.d("debug","2:" + tempCurPath )
+            val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI,null , selection, args,null)
+
+            cursor.moveToFirst()
+            val checkPath =cursor.getString(cursor.getColumnIndex( MediaStore.Images.Media.DATA)).split("/")[depath]
+
+            //直下に画像が見つかった時の処理
+            if( checkPath.contains(".jpg") || checkPath.contains(".JPG")){
+                curPath = tempCurPath
+
+                findViewById<DrawerLayout>(R.id.drawer_layout).closeDrawer(Gravity.LEFT)
+                setListView(tempCurPath)
+                depath--
+                return@setOnItemClickListener
+            }
+
+            do{
+                val path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DATA ))
+                val paths = path.split("/")
+                if( !directoryList.any { it.dir_name==paths[depath] }) {
+                    directoryList.add(DirListItem(dirBitMap, paths[depath], "/"))
+                }
+            }while(cursor.moveToNext())
+            cursor.close()
+
+            val adapter = DirListAdapter( applicationContext, R.layout.dir_list_item , directoryList )
+            findViewById<ListView>(R.id.drawer_list).adapter = adapter
+        */
         }
 
     }
-
     //ルートディレクトリを取得する
     fun getRootFolder() : HashSet<String>{
         val retSet = HashSet<String>()

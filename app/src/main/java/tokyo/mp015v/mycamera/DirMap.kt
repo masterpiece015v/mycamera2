@@ -35,6 +35,29 @@ class DirMap{
             map.put( key , pro )
         }
     }
+
+    //絶対パスのArrayListを返却する
+    fun getAbPathArrayList() : ArrayList<String>{
+        val list = ArrayList<String>()
+
+        for (key in map.keys) {
+            list.add( key )
+        }
+
+        return list
+    }
+
+    //絶対パス直下の画像ファイル名のArrayListを返却する
+    fun getImgFileNameArrayList( key : String) : ArrayList<String>{
+        val list = map.get(key)!!.imgFileNameList
+        return list
+    }
+
+    //絶対パス直下の画像数を返却する
+    fun getCount( key :String ) : Int{
+        return map.get(key)!!.count
+
+    }
 }
 
 class DirProperty{

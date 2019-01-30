@@ -6,19 +6,32 @@
 
     <ImageView
         android:id="@+id/dir_thum"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
         android:padding="3dp" />
 
-    <TextView
-        android:id="@+id/dir_name"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="top"
-        android:maxLines="1"
-        android:padding="5dp"
-        android:text="in_name"
-        android:textColor="#000"
-        android:textSize="18sp" />
+        android:layout_height="match_parent"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/dir_name"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="top"
+            android:maxLines="1"
+            android:text="in_name"
+            android:textColor="#000"
+            android:textSize="14sp" />
+
+        <TextView
+            android:id="@+id/dir_path"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:maxLines="2"
+            android:text="dir_path"
+            android:textSize="12sp" />
+    </LinearLayout>
 
 </LinearLayout>

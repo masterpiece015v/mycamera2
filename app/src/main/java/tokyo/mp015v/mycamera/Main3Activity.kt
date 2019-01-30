@@ -134,10 +134,10 @@ class Main3Activity : AppCompatActivity() {
 
                             val vertices = boundingPoly.get("vertices").asArray()
 
-                            val x1 = vertices[0].asObject().get("x").asInt()
-                            val y1 = vertices[0].asObject().get("y").asInt()
-                            val x2 = vertices[2].asObject().get("x").asInt()
-                            val y2 = vertices[2].asObject().get("y").asInt()
+                            val x1 = if( vertices[0].asObject().get("x") == null ) 0 else vertices[0].asObject().get("x").asInt()
+                            val y1 = if( vertices[0].asObject().get("y") == null ) 0 else vertices[0].asObject().get("y").asInt()
+                            val x2 = if( vertices[2].asObject().get("x") == null ) canvas.width else vertices[2].asObject().get("x").asInt()
+                            val y2 = if( vertices[2].asObject().get("y") == null ) canvas.height else vertices[2].asObject().get("y").asInt()
 
                             canvas.addRectPoint( x1,y1,x2,y2 )
 

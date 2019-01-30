@@ -30,6 +30,9 @@ class DirListAdapter(context: Context, resource : Int, items : List<DirListItem>
         val name = view.findViewById<TextView>(R.id.dir_name)
         name.text = item.dir_name
 
+        val path = view.findViewById<TextView>(R.id.dir_path)
+        path.text = item.dir_path
+
         return view
     }
 
