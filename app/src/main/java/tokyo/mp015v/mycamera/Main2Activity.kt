@@ -39,7 +39,6 @@ class Main2Activity : AppCompatActivity() {
     lateinit var timeStamp:String
     lateinit var imageFileName:String
     lateinit var picPath:String
-    var depath = 0
     lateinit var curPath:String
     val dirMap = DirMap()
 
@@ -111,177 +110,14 @@ class Main2Activity : AppCompatActivity() {
         dListView.adapter = adapter
 
         //イベント発生時のメソッド
-
         dListView.setOnItemClickListener { parent, view, position, id ->
             val item = parent.getItemAtPosition(position) as DirListItem
             setListView( item.dir_path )
             curPath = item.dir_path
             findViewById<DrawerLayout>(R.id.drawer_layout).closeDrawer(Gravity.LEFT)
-            /*
 
-            //←が選択されたら
-            if( item.dir_name.equals("←")){
-                depath-=1
-                var newCurPath = "/"
-                tempCurPath.split("/").forEachIndexed { index, s ->
-                    if(index > 0 && tempCurPath.split("/").size-1 > index ){
-                        newCurPath = if( index == 1 ) newCurPath + s else newCurPath + "/" + s
-                    }
-                }
-                tempCurPath = newCurPath
-            }else{
-                depath+=1
-                //ルートはそのままディレクトリ名を付ける
-                tempCurPath = if( tempCurPath.equals("/") ) tempCurPath + item.dir_name else tempCurPath + "/" + item.dir_name
-            }
-
-            //DrawerList用の設定
-            val directoryList = ArrayList<DirListItem>()
-            //ルートより深い場合
-            if( depath > 1 ) {
-                directoryList.add(DirListItem(dirBitMap, "←", "/"))
-            }
-
-            val selection = "_data like ?"
-            val args = arrayOf("%" + tempCurPath + "%")
-            Log.d("debug","2:" + tempCurPath )
-            val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI,null , selection, args,null)
-
-            cursor.moveToFirst()
-            val checkPath =cursor.getString(cursor.getColumnIndex( MediaStore.Images.Media.DATA)).split("/")[depath]
-
-            //直下に画像が見つかった時の処理
-            if( checkPath.contains(".jpg") || checkPath.contains(".JPG")){
-                curPath = tempCurPath
-
-                findViewById<DrawerLayout>(R.id.drawer_layout).closeDrawer(Gravity.LEFT)
-                setListView(tempCurPath)
-                depath--
-                return@setOnItemClickListener
-            }
-
-            do{
-                val path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DATA ))
-                val paths = path.split("/")
-                if( !directoryList.any { it.dir_name==paths[depath] }) {
-                    directoryList.add(DirListItem(dirBitMap, paths[depath], "/"))
-                }
-            }while(cursor.moveToNext())
-            cursor.close()
-
-            val adapter = DirListAdapter( applicationContext, R.layout.dir_list_item , directoryList )
-            findViewById<ListView>(R.id.drawer_list).adapter = adapter
-        */
         }
 
-    }
-    //ルートディレクトリを取得する
-    fun getRootFolder() : HashSet<String>{
-        val retSet = HashSet<String>()
-        //コンテンツリゾルバ―より画像の情報を取得する
-        val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI , null, null,null,null)
-
-        cursor.moveToFirst()
-        do{
-            val path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DATA))
-            val paths = path.split("/")
-            Log.d( "*****" , "paths=" + paths[1])
-            retSet.add( paths[1] )
-
-        }while( cursor.moveToNext() )
-        cursor.close()
-
-        return retSet
-    }
-    //下位層のフォルダを取得する
-    fun getChildFolder(parentFolder : String) : HashSet<String>{
-        val retSet = HashSet<String>()
-        //コンテンツリゾルバ―より画像の情報を取得する
-        val selection ="_data like ?"
-        val args = arrayOf( "${parentFolder}%")
-        val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI , null, selection,args,null)
-
-        return retSet
-    }
-
-    //フォルダの作成
-    fun createFolder(){
-        val dirBitMap = BitmapFactory.decodeResource(resources, R.drawable.ic_dir_black)
-        val directoryList = ArrayList<DirListItem>()
-        var tempCurPath = "/"
-
-        depath = 1
-
-        //ルートフォルダの取得
-        val set = getRootFolder()
-
-        set.forEach {
-            Log.d("******" , "it=" + it)
-            directoryList.add( DirListItem(dirBitMap, it , "/" + it ))
-        }
-
-        var adapter = DirListAdapter( applicationContext, R.layout.dir_list_item , directoryList )
-
-        //ドロワーのナビゲーションリストの設定
-        val dListView = findViewById<ListView>(R.id.drawer_list)
-        dListView.adapter = adapter
-
-        //イベント発生時のメソッド
-        dListView.setOnItemClickListener { parent, view, position, id ->
-            val item = parent.getItemAtPosition(position) as DirListItem
-            //←が選択されたら
-            if( item.dir_name.equals("←")){
-                depath-=1
-                var newCurPath = "/"
-                tempCurPath.split("/").forEachIndexed { index, s ->
-                    if(index > 0 && tempCurPath.split("/").size-1 > index ){
-                        newCurPath = if( index == 1 ) newCurPath + s else newCurPath + "/" + s
-                    }
-                }
-                tempCurPath = newCurPath
-            }else{
-                depath+=1
-                //ルートはそのままディレクトリ名を付ける
-                tempCurPath = if( tempCurPath.equals("/") ) tempCurPath + item.dir_name else tempCurPath + "/" + item.dir_name
-            }
-
-            //DrawerList用の設定
-            val directoryList = ArrayList<DirListItem>()
-            //ルートより深い場合
-            if( depath > 1 ) {
-                directoryList.add(DirListItem(dirBitMap, "←", "/"))
-            }
-
-            val selection = "_data like ?"
-            val args = arrayOf("%" + tempCurPath + "%")
-            Log.d("debug","2:" + tempCurPath )
-            val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI,null , selection, args,null)
-
-            cursor.moveToFirst()
-            val checkPath =cursor.getString(cursor.getColumnIndex( MediaStore.Images.Media.DATA)).split("/")[depath]
-
-            //直下に画像が見つかった時の処理
-            if( checkPath.contains(".jpg") || checkPath.contains(".JPG")){
-                curPath = tempCurPath
-
-                findViewById<DrawerLayout>(R.id.drawer_layout).closeDrawer(Gravity.LEFT)
-                setListView(tempCurPath)
-                depath--
-                return@setOnItemClickListener
-            }
-
-            do{
-                val path = cursor.getString( cursor.getColumnIndex( MediaStore.Images.Media.DATA ))
-                val paths = path.split("/")
-                if( !directoryList.any { it.dir_name==paths[depath] }) {
-                    directoryList.add(DirListItem(dirBitMap, paths[depath], "/"))
-                }
-            }while(cursor.moveToNext())
-            cursor.close()
-
-            val adapter = DirListAdapter( applicationContext, R.layout.dir_list_item , directoryList )
-            findViewById<ListView>(R.id.drawer_list).adapter = adapter
-        }
     }
 
     //Toolbarにtool_menuを追加する
@@ -327,10 +163,15 @@ class Main2Activity : AppCompatActivity() {
 
     //リストにサムネイルを作成する
     private fun setListView( filter_path : String ){
-        val selection = "_data like ?"
+        val selection = MediaStore.Images.Media.DATA + " like ?"
         val args = arrayOf("%${filter_path}%")
-        val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI,null,selection,args,null)
+        val cursor = contentResolver.query( MediaStore.Images.Media.EXTERNAL_CONTENT_URI,null,selection,args,"date_added desc")
         val listItem = ArrayList<ListItem>()
+        Log.d("***setListView***", "columncount:" + cursor.columnCount )
+
+        cursor.columnNames.forEach {
+            Log.d("***setListView***" , "columnNames:" + it )
+        }
 
         //画像がない場合は何もしない
         if( cursor.count > 0 ) {
@@ -398,6 +239,7 @@ class Main2Activity : AppCompatActivity() {
             contentResolver.insert(
                     MediaStore.Images.Media.EXTERNAL_CONTENT_URI,contentValues
             )
+            this.curPath = "casalack"
         }else if( requestCode == Main3Activity_CODE && resultCode == Activity.RESULT_OK){
             //Main3Activityからの復帰
             this.curPath = data!!.getStringExtra("curPath")
