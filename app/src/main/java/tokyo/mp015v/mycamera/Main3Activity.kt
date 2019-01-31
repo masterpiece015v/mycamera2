@@ -25,7 +25,7 @@ import java.io.FileInputStream
 
 class Main3Activity : AppCompatActivity() {
     val ENDPOINT_URL = "https://vision.googleapis.com/v1"
-    val API_KEY = "AIzaSyBCPU4CLhm_TwguXXXFYSvz20wWPqad1Rc"
+    val API_KEY = ""
     val LIKELIHOOD = mapOf("VERY_LIKELY" to "100%" , "LIKELY" to "75%" , "POSSIBLE" to "50%" , "UNLIKELY" to "25%" , "VERY_UNLIKELY" to "0%")
     lateinit var likelihood : String
     lateinit var canvas : MyCanvas
